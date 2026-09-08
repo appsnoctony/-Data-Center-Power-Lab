@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Center Power Lab — Capacitación Interactiva</title>
+<style>
+:root{
+  --bg:#0b1220; --card:#121b30; --card2:#0d1526; --line:#24365c;
+  --tx:#e6edf7; --mut:#93a5c4; --az:#38bdf8; --vd:#4ade80; --rj:#f87171; --am:#fbbf24;
+}
+*{box-sizing:border-box; margin:0; padding:0}
+body{background:var(--bg); color:var(--tx); font-family:'Segoe UI',system-ui,Arial,sans-serif; padding-bottom:60px}
+header{background:linear-gradient(135deg,#0e1a35,#12234a); border-bottom:2px solid var(--line); padding:22px 18px; text-align:center}
+header h1{font-size:1.5rem} header h1 span{color:var(--az)}
+header p{color:var(--mut); font-size:.9rem; margin-top:4px}
+#prog{max-width:1100px; margin:10px auto 0; color:var(--am); font-weight:700; font-size:.85rem}
+nav{position:sticky; top:0; z-index:50; background:#0d1526ee; backdrop-filter:blur(6px); border-bottom:1px solid var(--line); display:flex; flex-wrap:wrap; gap:6px; justify-content:center; padding:10px}
+.tab{background:var(--card2); border:1px solid var(--line); color:var(--mut); padding:8px 16px; border-radius:999px; cursor:pointer; font-weight:600; font-size:.85rem}
+.tab.act{background:var(--az); color:#06263a; border-color:var(--az)}
+main{max-width:1100px; margin:0 auto; padding:16px}
+section{display:none} section.act{display:block}
+.card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px 20px; margin:16px 0}
+.card h2{font-size:1.15rem; margin-bottom:6px}
+.card h2 .tag{font-size:.7rem; background:var(--am); color:#3a2b00; border-radius:6px; padding:2px 8px; vertical-align:middle; margin-left:8px}
+.card h2 .tagc{font-size:.7rem; background:var(--az); color:#06263a; border-radius:6px; padding:2px 8px; vertical-align:middle; margin-left:8px}
+.card>p, .lead{color:var(--mut); font-size:.92rem; margin-bottom:12px}
+ul.pts{margin:8px 0 12px 20px; color:var(--mut); font-size:.9rem} ul.pts li{margin:4px 0}
+.btn{background:var(--az); color:#06263a; border:none; padding:9px 18px; border-radius:9px; font-weight:700; cursor:pointer; font-size:.88rem; margin:4px 6px 4px 0}
+.btn:hover{filter:brightness(1.12)}
+.btn.gh{background:transparent; color:var(--az); border:1.5px solid var(--az)}
+.btn.vd{background:var(--vd); color:#052e12}
+.btn:disabled{opacity:.45; cursor:not-allowed}
+.bdg{display:inline-block; padding:4px 12px; border-radius:999px; font-size:.75rem; font-weight:800; background:#334; color:#aab}
+.bdg.ok{background:#123c22; color:var(--vd)} .bdg.bad{background:#46161b; color:var(--rj)}
+.bdg.warn{background:#443208; color:var(--am)} .bdg.on{background:#0b3350; color:var(--az)}
+input[type=range]{width:100%; accent-color:var(--az); margin:8px 0}
+.row{display:flex; gap:16px; flex-wrap:wrap} .row>*{flex:1; min-width:260px}
+.panel{background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; font-size:.9rem; margin-top:10px}
+.big{font-size:1.6rem; font-weight:800; color:var(--az)}
+.okT{color:var(--vd)} .badT{color:var(--rj)} .amT{color:var(--am)}
+canvas{width:100%; border-radius:10px; background:#0a1020; border:1px solid var(--line); display:block}
+.kpis{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+.kpi{flex:1; min-width:120px; background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center}
+.kpi b{display:block; font-size:1.25rem; color:var(--az)} .kpi span{font-size:.75rem; color:var(--mut)}
+.chip{display:inline-block; background:var(--card2); border:1px solid var(--line); border-radius:8px; padding:6px 12px; margin:3px; font-size:.82rem; color:var(--mut)}
+.chip b{color:var(--tx)}
+#upsSvg .blk{fill:#16305a; stroke:var(--az); stroke-width:1.5; cursor:pointer}
+#upsSvg .blk:hover{fill:#1d3f77}
+#upsSvg text{fill:var(--tx); font-size:13px; font-weight:700; text-anchor:middle; pointer-events:none}
+#upsSvg #tByp{pointer-events:auto; cursor:pointer; fill:#5b6c93; font-weight:400}
+#upsSvg .flow{stroke:var(--vd); stroke-width:3; fill:none; stroke-dasharray:7 6; animation:mv 1s linear infinite}
+#upsSvg .flow.off{stroke:#39456a; animation:none}
+#upsSvg .flow.bat{stroke:var(--am)}
+#upsSvg .byp{stroke:#5b6c93; stroke-width:2; fill:none; stroke-dasharray:4 5; cursor:pointer}
+#upsSvg .byp:hover{stroke:#8ba0cc}
+#upsSvg rect.bad{fill:#4a1420; stroke:var(--rj)}
+#upsSvg rect.dim{opacity:.35}
+@keyframes mv{to{stroke-dashoffset:-13}}
+.track{position:relative; height:22px; background:#20304f; border-radius:6px; overflow:hidden; margin:8px 0}
+.track .fill{position:absolute; inset:0; background:linear-gradient(90deg,#1c8c4d,var(--vd))}
+.track .gap{position:absolute; left:45%; top:0; height:100%; width:0; background:#7a1024; transition:width .4s}
+.track .gap.show{width:52px}
+.tracklbl{font-size:.8rem; color:var(--mut)}
+.mods{display:flex; gap:10px; flex-wrap:wrap; margin:12px 0}
+.mod{flex:1; min-width:110px; background:#16305a; border:2px solid var(--az); border-radius:10px; padding:14px 8px; text-align:center; cursor:pointer; font-weight:700; transition:.2s}
+.mod small{display:block; color:var(--mut); font-weight:400; font-size:.72rem}
+.mod.falla{background:#4a1420; border-color:var(--rj); text-decoration:line-through; opacity:.75}
+.mod.extra{border-color:var(--vd); background:#11331f}
+.tl{display:flex; gap:8px; flex-wrap:wrap; margin:12px 0}
+.stp{flex:1; min-width:130px; background:var(--card2); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center; font-size:.8rem; color:var(--mut)}
+.stp b{display:block; font-size:.85rem; margin-bottom:4px; color:var(--mut)}
+.stp.act{border-color:var(--am)} .stp.act b{color:var(--am)}
+.stp.done{border-color:var(--vd)} .stp.done b{color:var(--vd)}
+.stp.err{border-color:var(--rj)} .stp.err b{color:var(--rj)}
+.batbar{height:16px; background:#20304f; border-radius:8px; overflow:hidden; margin:6px 0}
+.batbar i{display:block; height:100%; background:var(--vd); transition:width .8s}
+#tsLog{margin-top:10px; font-size:.82rem; color:var(--mut); max-height:190px; overflow:auto}
+#tsLog li{margin:3px 0; list-style:none; border-left:3px solid var(--az); padding-left:8px}
+#tsLog li b{color:var(--tx)}
+#htLog{margin-top:10px; font-size:.82rem; color:var(--mut); max-height:150px; overflow:auto}
+#htLog li{margin:3px 0; list-style:none; border-left:3px solid var(--am); padding-left:8px}
+#gvLog{margin-top:10px; font-size:.82rem; color:var(--mut); max-height:140px; overflow:auto}
+#gvLog li{margin:3px 0; list-style:none; border-left:3px solid var(--am); padding-left:8px}
+#wiBars{display:flex; gap:12px; align-items:flex-end; height:150px; margin:14px 0; border-bottom:2px solid var(--line); padding:0 10px}
+.wbar{width:60px; background:linear-gradient(180deg,#1c8c4d,var(--vd)); border-radius:6px 6px 0 0; height:0; transition:height .8s; position:relative; text-align:center; color:#04240f; font-weight:800; font-size:.78rem}
+.drwrap{background:#20304f; border-radius:8px; height:26px; overflow:hidden; margin:10px 0}
+.drwrap i{display:block; height:100%; background:var(--vd); transition:.3s}
+#huPanel{border-radius:12px; padding:18px; text-align:center; transition:.3s; border:1px solid var(--line)}
+#huPanel .emo{font-size:3rem}
+#huPanel h3{margin:6px 0}
+#huPanel.low{background:#3d2a05} #huPanel.good{background:#0e3520} #huPanel.high{background:#0c2f45}
+.huscale{height:10px; border-radius:5px; background:linear-gradient(90deg,#b45309,#16a34a,#0369a1); margin:10px 0}
+.u3row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:6px 0}
+.u3name{width:200px; min-width:170px; font-weight:700; font-size:.9rem}
+.u3name small{display:block; color:var(--mut); font-weight:400; font-size:.72rem; margin-top:2px}
+.u3row canvas{flex:1; min-width:260px}
+.u3row .u3p{flex:1 1 100%; margin-top:0}
+.ctab{width:100%; border-collapse:collapse; margin-top:10px; font-size:.82rem}
+.ctab th,.ctab td{border:1px solid var(--line); padding:6px 8px; text-align:left; color:var(--mut)}
+.ctab th{color:var(--tx); background:#0f1a33}
+.atstrack{position:relative; display:flex; justify-content:space-between; align-items:center; background:#20304f; border:1px solid var(--line); border-radius:999px; height:36px; padding:0 12px; max-width:340px; margin:10px 0}
+.atsend{font-weight:800; font-size:.8rem}
+.atsend.red{color:var(--az)} .atsend.gen{color:var(--am)}
+.atsknob{position:absolute; top:3px; left:4px; width:70px; height:28px; background:var(--az); border-radius:999px; transition:left .7s, background .3s; display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:800; color:#06263a}
+.atsknob.posGen{left:calc(100% - 74px); background:var(--am)}
+.atsknob.moving{box-shadow:0 0 0 3px #ffffff55, 0 0 18px var(--am)}
+#apClock{font-family:Consolas,'Courier New',monospace; font-size:1.5rem; font-weight:800; color:var(--am)}
+.hmsteps{margin:6px 0 0 20px; color:var(--mut); font-size:.85rem}
+.hmsteps li{margin:5px 0; transition:.2s}
+.hmsteps li.act{color:var(--am); font-weight:700}
+.hmsteps li.done{color:var(--vd)}
+.note{font-size:.78rem; color:var(--mut); margin-top:6px}
+footer{text-align:center; color:var(--mut); font-size:.78rem; padding:24px}
+@media(max-width:640px){ header h1{font-size:1.15rem} }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Data Center <span>Power Lab</span></h1>
+  <p>Capacitación interactiva: Fundamentos de Infraestructura Crítica — Aprende tocando, moviendo y simulando</p>
+  <div id="prog">Conceptos explorados: <span id="seenN">0</span>/15 — ¡Explora todos los simuladores!</div>
+</header>
+
+<nav>
+  <button class="tab act" data-s="m1">1 · Fundamentos</button>
+  <button class="tab" data-s="m2">2 · UPS</button>
+  <button class="tab" data-s="m3">3 · Generadores</button>
+  <button class="tab" data-s="m4">4 · PDU y Clima</button>
+</nav>
+
+<main>
+
+<!-- ============ MÓDULO 1 ============ -->
+<section id="m1" class="act">
+
+<div class="card">
+  <h2>⚡ AC vs DC <span class="tag">INTERACTIVO</span></h2>
+  <p>Mueve el interruptor y el slider de frecuencia. Observa cómo se mueven los electrones y la forma de onda.</p>
+  <button class="btn" id="btnAC">Onda AC</button>
+  <button class="btn gh" id="btnDC">Línea DC</button>
+  <label>Frecuencia visual: <b id="fLbl">1.0</b> Hz (ralentizado para verlo)</label>
+  <input type="range" id="fSlider" min="0.2" max="3" step="0.1" value="1">
+  <canvas id="acdcCv" width="900" height="240"></canvas>
+  <div class="panel" id="acdcInfo"><b>AC (Corriente Alterna):</b> la corriente cambia de sentido periódicamente — por eso la onda sube y baja cruzando el cero. En la red: 60 ciclos por segundo (60 Hz). <i>Analogía: la marea que va y viene.</i></div>
+</div>
+
+<div class="card">
+  <h2>🌍 Frecuencia de la red</h2>
+  <p>La frecuencia es cuántas veces por segundo la onda AC completa un ciclo.</p>
+  <div class="kpis">
+    <div class="kpi"><b>60 Hz</b><span>América Latina (incl. Costa Rica) ✅</span></div>
+    <div class="kpi"><b>50 Hz</b><span>Europa y parte de Asia</span></div>
+  </div>
+  <div class="panel">💡 <b>Truco para no olvidarlo:</b> "América = 60".</div>
+</div>
+
+<div class="card">
+  <h2>🏭 ¿Por qué transmitimos en AC? <span class="tag">INTERACTIVO</span></h2>
+  <p>Sube el voltaje de transmisión y observa qué pasa con la corriente y las pérdidas (P = I² × R). Potencia fija: 100 MW.</p>
+  <label>Voltaje de transmisión: <b id="txVl">100</b> kV</label>
+  <input type="range" id="txV" min="25" max="400" step="5" value="100">
+  <div class="kpis">
+    <div class="kpi"><b id="txI">1000 A</b><span>Corriente en la línea</span></div>
+    <div class="kpi"><b id="txP" style="color:var(--rj)">100%</b><span>Pérdidas relativas</span></div>
+    <div class="kpi"><b id="txG" style="color:var(--vd)">100 MW</b><span>Potencia entregada</span></div>
+  </div>
+  <div class="panel" id="txMsg">Duplica el voltaje → la corriente se reduce a la mitad → las pérdidas bajan a <b>un cuarto</b>. Por eso se usan transformadores: solo funcionan bien con AC.</div>
+</div>
+
+<div class="card">
+  <h2>🍺 Factor de potencia <span class="tag">INTERACTIVO</span></h2>
+  <p>Relación entre potencia real (kW) y aparente (kVA), afectada por el desfase entre voltaje y corriente. Baja el FP y mira cuánta "espuma" pagas.</p>
+  <label>Factor de potencia: <b id="fpLbl">0.95</b></label>
+  <input type="range" id="fpS" min="0.50" max="1.00" step="0.01" value="0.95">
+  <div class="row">
+    <div>
+      <svg id="fpTri" viewBox="0 0 260 200" width="100%" height="190">
+        <path id="triP" fill="#38bdf855" stroke="#38bdf8" stroke-width="2"/>
+        <text id="triKw" x="110" y="190" fill="#4ade80" font-size="13" font-weight="700">kW</text>
+        <text id="triKvar" x="16" y="100" fill="#fbbf24" font-size="13" font-weight="700">kVAR</text>
+        <text id="triKva" x="140" y="70" fill="#38bdf8" font-size="13" font-weight="700">kVA</text>
+      </svg>
+    </div>
+    <div>
+      <div style="width:90px; height:170px; border:3px solid #93a5c4; border-radius:0 0 14px 14px; position:relative; overflow:hidden; margin:auto">
+        <div id="beer" style="position:absolute; bottom:0; width:100%; background:#f59e0b; height:95%; transition:.3s"></div>
+      </div>
+      <p class="note" style="text-align:center">kW = líquido útil · espuma = kVAR</p>
+    </div>
+    <div class="panel">Con kVA = 100:<br>💪 Real: <b id="fpKw" class="okT">95 kW</b><br>🫧 Reactiva: <b id="fpKvar" class="amT">31 kVAR</b><br>📐 Meta en Data Center: FP ≥ 0.95</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>⭐ Sistema trifásico en Estrella (Y) <span class="tagc">TEMA CRÍTICO</span> <span class="tag">INTERACTIVO</span></h2>
+  <p>El tema más fallado del quiz. En estrella: <b class="amT">V línea = V fase × √3 (≈1.73)</b>. ¡La línea es MAYOR que la fase, nunca al revés!</p>
+  <label>Voltaje de fase: <b id="yVl">120</b> V</label>
+  <input type="range" id="yV" min="100" max="280" step="1" value="120">
+  <div class="row">
+    <svg id="ySvg" viewBox="0 0 300 300" width="100%" height="260">
+      <circle cx="150" cy="150" r="120" fill="none" stroke="#24365c" stroke-dasharray="4 5"/>
+      <line id="yl1" stroke="#38bdf8" stroke-width="3"/><line id="yl2" stroke="#38bdf8" stroke-width="3"/><line id="yl3" stroke="#38bdf8" stroke-width="3"/>
+      <line id="yLin" stroke="#4ade80" stroke-width="4"/>
+      <circle cx="150" cy="150" r="7" fill="#93a5c4"/>
+      <text x="150" y="132" fill="#93a5c4" font-size="12" text-anchor="middle">N</text>
+      <text id="yF1t" x="150" y="22" fill="#38bdf8" font-size="12" text-anchor="middle">F1</text>
+      <text id="yF2t" x="262" y="230" fill="#38bdf8" font-size="12">F2</text>
+      <text id="yF3t" x="20" y="230" fill="#38bdf8" font-size="12">F3</text>
+      <text id="yLL" x="215" y="80" fill="#4ade80" font-size="13" font-weight="800" text-anchor="middle">V línea</text>
+    </svg>
+    <div class="panel">
+      La línea verde une dos puntas de fase: su longitud es <b>1.73 veces</b> el radio (la fase). ¡La geometría lo demuestra!<br><br>
+      🔵 V fase: <b id="yFv" class="big">120 V</b><br>🟢 V línea: <b id="yLv" class="big" style="color:var(--vd)">208 V</b><br><br>
+      <span class="chip">120 V fase → <b>208 V línea</b></span><span class="chip">277 V fase → <b>480 V línea</b></span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔋 ¿Por qué las baterías son DC? <span class="tagc">TEMA CRÍTICO</span></h2>
+  <p>Observa las partículas dentro de la celda: la reacción química empuja los electrones <b>siempre en el mismo sentido</b>. Eso ES corriente continua.</p>
+  <canvas id="batCv" width="900" height="200"></canvas>
+  <div class="panel">✅ <b>Respuesta correcta:</b> las baterías almacenan energía como una <b>diferencia de potencial constante</b> entre sus terminales, <b>sin inversión de polaridad</b>.<br>❌ Mito 1: "por mayor densidad de energía" — falso. ❌ Mito 2: "las reacciones requieren AC" — falso.</div>
+</div>
+
+</section>
+
+<!-- ============ MÓDULO 2 ============ -->
+<section id="m2">
+
+<div class="card">
+  <h2>🛡️ UPS: función principal</h2>
+  <div class="row">
+    <div class="kpi"><b>1</b><span>Respaldo <b>momentáneo</b>: el puente entre la falla y el generador</span></div>
+    <div class="kpi"><b>2</b><span>Mejorar la <b>calidad</b> de la energía: picos, caídas, ruido</span></div>
+  </div>
+  <div class="panel">No es para sostener la carga por horas: ese es el trabajo del generador. El UPS cubre el <b>segundo cero</b>.</div>
+</div>
+
+<div class="card">
+  <h2>🔄 UPS Doble Conversión (Online) + fallas por componente <span class="tagc">TEMA CRÍTICO</span> <span class="tag">INTERACTIVO</span></h2>
+  <p>Haz clic en cualquier bloque para conocerlo y <b>simular su falla</b>. El UPS reacciona distinto según DÓNDE ocurra: fallas antes del Bus DC las cubren las baterías; fallas del Bus DC o del Inversor obligan a irse a <b>BYPASS</b>.</p>
+  <svg id="upsSvg" viewBox="0 0 880 320" width="100%">
+    <path class="byp" id="pByp" d="M 110 95 C 260 30, 620 30, 770 95"/>
+    <text id="tByp" x="440" y="42" font-size="12">Bypass (ruta de reserva pasiva — no convierte nada) 👆</text>
+    <path class="flow" id="fpByp" d="M 110 95 C 260 30, 620 30, 770 95" style="display:none"/>
+    <path class="flow" id="fp1" d="M 175 190 H 225"/>
+    <path class="flow" id="fp2" d="M 365 190 H 415"/>
+    <path class="flow" id="fp3" d="M 555 190 H 605"/>
+    <path class="flow" id="fp4" d="M 745 190 H 770"/>
+    <path class="flow bat" id="fpBat" d="M 480 190 V 245" style="display:none"/>
+    <rect class="blk" id="bRed"  x="45"  y="158" width="130" height="64" rx="8"/><text x="110" y="195">Red AC</text>
+    <rect class="blk" id="bRec"  x="225" y="158" width="140" height="64" rx="8"/><text x="295" y="188">Rectificador</text><text x="295" y="206" font-size="11" fill="#93a5c4">AC → DC</text>
+    <rect class="blk" id="bBus"  x="415" y="158" width="140" height="64" rx="8"/><text x="485" y="195">Bus DC</text>
+    <rect class="blk" id="bInv"  x="605" y="158" width="140" height="64" rx="8"/><text x="675" y="188">Inversor</text><text x="675" y="206" font-size="11" fill="#fbbf24">DC → AC ★</text>
+    <rect class="blk" id="bCar"  x="770" y="158" width="90"  height="64" rx="8"/><text x="815" y="195">Carga</text>
+    <rect class="blk" id="bBat"  x="415" y="245" width="140" height="58" rx="8"/><text x="485" y="270">Baterías</text><text x="485" y="288" font-size="11" fill="#93a5c4">(DC)</text>
+  </svg>
+  <div style="margin-top:8px">
+    <button class="btn gh" id="upsResetBtn">🔧 Restablecer UPS</button>
+  </div>
+  <div class="panel" id="upsInfo">👆 Haz clic en un bloque del diagrama: Red, Rectificador, Bus DC, Baterías, Inversor, Carga o la línea de Bypass.</div>
+  <div id="upsFailSlot"></div>
+  <div class="panel" id="upsStatus"><b class="okT">Estado: NORMAL.</b> Flujo: AC entrada → Rectificador → Bus DC → Inversor → Carga. La doble conversión ocurre <b>todo el tiempo</b>, por eso la transferencia a baterías es de <b>0 ms</b>.</div>
+  <div class="panel">📌 <b>Regla de oro:</b> las baterías cubren fallas de FUENTE (red, rectificador). Fallas de CONVERSIÓN (Bus DC, Inversor) → el <b>bypass estático</b> entrega la red directo a la carga en 2–4 ms.</div>
+</div>
+
+<div class="card">
+  <h2>🔀 Los 3 tipos de UPS: Offline, Línea-interactiva y Online <span class="tag">INTERACTIVO</span></h2>
+  <p>Elige un evento de la red y compara cómo reacciona cada topología. La onda muestra el voltaje que <b>recibe la carga</b>.</p>
+  <button class="btn gh" data-ev="corte">⚡ Corte total</button>
+  <button class="btn gh" data-ev="sag">📉 Caída de tensión (sag)</button>
+  <button class="btn gh" data-ev="surge">📈 Sobretensión (surge)</button>
+  <div class="u3row">
+    <div class="u3name">🔌 Offline / Standby<small>Normal: RED → CARGA directo. El inversor está en espera.</small></div>
+    <canvas id="u3c0" width="620" height="110"></canvas>
+    <div class="panel u3p" id="u3s0">Modo normal: la onda de la red pasa directo a la carga, sin procesar.</div>
+  </div>
+  <div class="u3row">
+    <div class="u3name">🟰 Línea-interactiva<small>Normal: RED → AVR (taps) → CARGA. Corrige variaciones sin batería.</small></div>
+    <canvas id="u3c1" width="620" height="110"></canvas>
+    <div class="panel u3p" id="u3s1">Modo normal: el autotransformador AVR ajusta taps ante sags/swells leves.</div>
+  </div>
+  <div class="u3row">
+    <div class="u3name">🌟 Online (doble conversión)<small>Normal: RED → RECTIFICADOR → BUS DC → INVERSOR → CARGA, siempre.</small></div>
+    <canvas id="u3c2" width="620" height="110"></canvas>
+    <div class="panel u3p" id="u3s2">Modo normal: la onda se REGENERA permanentemente (doble conversión).</div>
+  </div>
+  <table class="ctab">
+    <tr><th>Tipo</th><th>Camino normal de la energía</th><th>Transferencia</th><th>Batería en un sag</th><th>Calidad de salida</th></tr>
+    <tr><td>Offline / Standby</td><td>Red directa a la carga</td><td>2–10 ms</td><td>Sí (transfiere)</td><td>Básica</td></tr>
+    <tr><td>Línea-interactiva</td><td>Red + AVR</td><td>2–4 ms</td><td>No (lo corrige el AVR)</td><td>Media-alta</td></tr>
+    <tr><td>Online (doble conversión)</td><td>AC→DC→AC permanente</td><td><b style="color:var(--vd)">0 ms</b></td><td>No necesaria</td><td>Máxima (onda regenerada)</td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2>⏱️ Tiempo de transferencia <span class="tag">INTERACTIVO</span></h2>
+  <p>Tiempo que tarda el UPS en conmutar entre fuentes (red, batería o bypass) <b>sin interrumpir la carga</b>. Presiona el botón y compara:</p>
+  <button class="btn" id="ttRun">⚡ Falla de red</button>
+  <div class="tracklbl">🟢 UPS Online (doble conversión) — <b>0 ms</b>: nunca conmuta, siempre está convirtiendo</div>
+  <div class="track"><div class="fill"></div><div class="gap" id="gapA"></div></div>
+  <div class="tracklbl">🟡 UPS Standby / línea-interactiva — <b>2 a 10 ms</b> de hueco</div>
+  <div class="track"><div class="fill"></div><div class="gap" id="gapB"></div></div>
+  <div class="panel" id="ttOut">La hoja técnica indica este valor: en un online debe decir <b>0 ms</b>.</div>
+</div>
+
+<div class="card">
+  <h2>➕ Redundancia N+1 <span class="tagc">TEMA CRÍTICO</span> <span class="tag">INTERACTIVO</span></h2>
+  <p>N = capacidad mínima necesaria. <b>+1 = un módulo adicional</b> para tolerar la falla de una unidad sin perder capacidad. Demanda: <b>300 kW</b> · módulos de 100 kW. Haz clic en los módulos para fallarlos.</p>
+  <button class="btn gh" id="n1Mode">Modo actual: N+1 (4 módulos) ▸ cambiar a N</button>
+  <button class="btn vd" id="n1Fix">🔧 Reparar todo</button>
+  <div class="mods" id="modsBox"></div>
+  <div class="panel" id="n1State"></div>
+</div>
+
+</section>
+
+<!-- ============ MÓDULO 3 ============ -->
+<section id="m3">
+
+<div class="card">
+  <h2>🌑 Apagón completo: Red + ATS + UPS + Generador <span class="tag">INTERACTIVO</span></h2>
+  <p>Simulación a velocidad reducida con <b>pausa</b> y <b>reloj</b>. Observa exactamente cuándo el ATS transfiere al generador y cuándo retransfiere a la red.</p>
+  <button class="btn" id="tsRun">🌑 Simular apagón</button>
+  <button class="btn gh" id="tsPause">⏸ Pausar</button>
+  <button class="btn gh act" id="tsSlow">🐢 Lento</button>
+  <button class="btn gh" id="tsNorm">🐇 Normal</button>
+  <div id="apClock">t = 0.0 s</div>
+  <div class="atstrack">
+    <span class="atsend red">RED</span>
+    <div class="atsknob" id="atsKnob">EN RED</div>
+    <span class="atsend gen">GEN</span>
+  </div>
+  <div class="tl">
+    <div class="stp" id="stRed"><b>Red comercial</b><span class="bdg ok">OK</span></div>
+    <div class="stp" id="stUps"><b>UPS</b><span class="bdg ok">En línea</span></div>
+    <div class="stp" id="stGen"><b>Generador</b><span class="bdg">En espera</span></div>
+    <div class="stp" id="stAts"><b>ATS</b><span class="bdg">EN RED</span></div>
+    <div class="stp" id="stCar"><b>Carga TI</b><span class="bdg ok">Alimentada</span></div>
+  </div>
+  <div class="tracklbl">Baterías del UPS: <span id="batPct">100%</span></div>
+  <div class="batbar"><i id="batBar" style="width:100%"></i></div>
+  <ul id="tsLog"></ul>
+  <div class="panel" id="apSum" style="display:none"></div>
+</div>
+
+<div class="card">
+  <h2>🚫 ¿Por qué el generador NO reemplaza al UPS?</h2>
+  <div class="row">
+    <div class="panel">🐢 El generador tarda <b>segundos o minutos</b> en arrancar y estabilizarse (frecuencia/voltaje).</div>
+    <div class="panel">🕳️ Ese <b>vacío de energía</b> solo lo puede cubrir el UPS con sus baterías: respuesta instantánea.</div>
+    <div class="panel">🤝 Son <b>complementarios</b>: UPS = puente instantáneo · Genset = sostenimiento por horas.</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🪜 Walk-in test (carga escalonada) <span class="tag">INTERACTIVO</span></h2>
+  <p>Aplicar la carga <b>gradualmente, en escalones</b>, tras el arranque — nunca de golpe — para evitar sobrecargas y verificar que el generador estabilice frecuencia y voltaje en cada paso.</p>
+  <button class="btn" id="wiRun">▶ Iniciar prueba 25→50→75→100%</button>
+  <div id="wiBars"></div>
+  <div class="panel" id="wiOut">Esperando inicio de la prueba…</div>
+</div>
+
+<div class="card">
+  <h2>🔥 Calentador de camisas (jacket water heater) <span class="tag">INTERACTIVO</span></h2>
+  <p>Resistencia que mantiene el refrigerante del motor a ~45 °C las 24 horas. Actívalo o desactívalo y ordena un arranque para comparar: tiempo para estar listo para aceptar carga y desgaste del motor.</p>
+  <button class="btn" id="htOnT">🔥 Calentador ON</button>
+  <button class="btn gh" id="htOffT">❄️ Calentador OFF</button>
+  <button class="btn vd" id="htStart">🚀 Ordenar arranque del generador</button>
+  <button class="btn gh" id="htClear">🧹 Limpiar</button>
+  <div class="panel" id="htState">Calentador: 🔥 ON (refrigerante a 45 °C listo para arrancar)</div>
+  <canvas id="htCv" width="900" height="260"></canvas>
+  <div class="panel" id="htReady">Ejecuta una prueba con el calentador ON y otra con OFF para comparar los tiempos.</div>
+  <ul id="htLog"></ul>
+  <div class="panel">💡 Consume solo <b>1–3 kW continuos</b>, pero garantiza arranque en segundos, aceptación rápida de carga y evita el <b>choque térmico</b> (expansión desigual de los metales del motor → desgaste).</div>
+</div>
+
+<div class="card">
+  <h2>⚙️ Control de velocidad del generador: RPM → Hz (variador / gobernador) <span class="tag">INTERACTIVO</span></h2>
+  <p>El motor diésel arrastra el alternador, y la frecuencia de salida depende <b>directamente de las RPM</b>: <b class="amT">f = (RPM × N° de polos) / 120</b>. Con 4 polos: <b class="amT">1800 RPM = 60 Hz</b>. El controlador de velocidad (variador/gobernador) inyecta más o menos combustible para <b>sostener las 1800 RPM</b> cuando la carga cambia: si la carga sube, el motor frena, y el controlador abre el combustible hasta recuperar los 60.0 Hz.</p>
+  <button class="btn" id="gvAuto">🎛️ Control automático: ON (activo)</button>
+  <span style="display:inline-block; min-width:230px; color:var(--mut); font-size:.85rem">Combustible (control manual): <b id="gvFuelLbl">60%</b></span>
+  <input type="range" id="gvFuel" min="3" max="100" value="60">
+  <div style="margin-top:4px; color:var(--mut); font-size:.85rem"><b>⚡ Carga aplicada al generador:</b> haz clic y observa las RPM, la frecuencia y el combustible.</div>
+  <div>
+    <button class="btn gvld" data-load="0">0%</button>
+    <button class="btn gh gvld" data-load="25">25%</button>
+    <button class="btn gh gvld" data-load="50">50%</button>
+    <button class="btn gh gvld" data-load="75">75%</button>
+    <button class="btn gh gvld" data-load="100">100%</button>
+  </div>
+  <canvas id="gvCv" width="900" height="250"></canvas>
+  <div class="panel" id="gvState">Modo automático activo: el gobernador mantiene 1800 RPM / 60 Hz. Aplica carga para ver la reacción.</div>
+  <ul id="gvLog"></ul>
+  <div class="panel">📌 Los equipos TI exigen <b>60 Hz ± 0.5</b>. Si las RPM caen sin control, la frecuencia sale de especificación y los equipos pueden fallar o apagarse. 💡 <b>Nota:</b> el mismo principio de velocidad variable se usa en ventiladores y bombas del centro de datos (CRAC/CRAH, agua helada): bajar la velocidad reduce la potencia al cubo (P ∝ n³).</div>
+</div>
+
+</section>
+
+<!-- ============ MÓDULO 4 ============ -->
+<section id="m4">
+
+<div class="card">
+  <h2>🔌 ¿Qué es un PDU?</h2>
+  <p>Equipo que <b>distribuye y, en muchos casos, monitorea la energía eléctrica hacia los racks y equipos</b>.</p>
+  <span class="chip">Básica</span><span class="chip">Con medición</span><span class="chip">Monitoreada</span><span class="chip">Conmutable</span>
+</div>
+
+<div class="card">
+  <h2>🌡️ Derating del PDU por temperatura <span class="tag">INTERACTIVO</span></h2>
+  <p>"Derated" = <b>reducción de la capacidad de corriente nominal</b> cuando el PDU opera a temperaturas ambientales elevadas. PDU nominal: 32 A.</p>
+  <label>Temperatura ambiente: <b id="drTl">25</b> °C</label>
+  <input type="range" id="drT" min="20" max="60" step="1" value="25">
+  <div class="drwrap"><i id="drBar"></i></div>
+  <div class="kpis">
+    <div class="kpi"><b id="drPct">100%</b><span>Capacidad disponible</span></div>
+    <div class="kpi"><b id="drAmp">32 A</b><span>Corriente segura</span></div>
+  </div>
+  <div class="panel">❌ No es "tiempo de enfriamiento tras sobrecarga", ni "aumento de voltaje", ni "desconexión total a 40 °C". Es simplemente: <b>más calor → menos capacidad útil segura</b>.</div>
+</div>
+
+<div class="card">
+  <h2>❄️ CRAC / CRAH: aire de precisión</h2>
+  <p>Objetivo: mantener condiciones <b>estrictas y estables</b> de temperatura y humedad, con <b>alta disponibilidad y control continuo 24/7</b>. Es control de proceso, no confort.</p>
+  <span class="chip">CRAC → refrigerante directo (compresor)</span><span class="chip">CRAH → agua helada (chilled water)</span>
+</div>
+
+<div class="card">
+  <h2>💧 Humedad relativa: los dos extremos <span class="tagc">TEMA CRÍTICO</span> <span class="tag">INTERACTIVO</span></h2>
+  <p>Mueve el slider y descubre qué pasa en cada extremo. Zona segura ASHRAE: <b>40% – 60%</b>.</p>
+  <label>Humedad relativa: <b id="huL">45</b> %</label>
+  <input type="range" id="huS" min="15" max="85" step="1" value="45">
+  <div class="huscale"></div>
+  <div id="huPanel" class="good">
+    <div class="emo">✅</div>
+    <h3>Zona segura</h3>
+    <p>Condiciones ideales para los equipos. Mnemotecnia: <b>SECO = chispas · HÚMEDO = gotas</b></p>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🌫️ El circuito: cómo inyecta humedad y cómo seca un CRAC <span class="tag">INTERACTIVO</span></h2>
+  <p>Sigue el <b>aire</b> en el diagrama: la sala → retorno → ventilador → serpentín → humidificador → suministro → sala. El equipo tiene <b>dos procesos opuestos</b>: <b>💦 inyectar vapor</b> cuando falta humedad, o <b>❄️ condensar y drenar el exceso</b> cuando sobra. Cada proceso se explica <b>paso a paso</b> en las listas de abajo, que se van marcando en vivo.</p>
+  <div>
+    <b style="font-size:.85rem">Escenario de la sala:</b>
+    <button class="btn gh" data-hs="seco">🏜️ Pierde humedad (día seco)</button>
+    <button class="btn" data-hs="humedo">🌧️ Entra aire húmedo</button>
+    <button class="btn gh" data-hs="estable">⚖️ Estable</button>
+  </div>
+  <div style="margin-top:4px">
+    <b style="font-size:.85rem">Control:</b>
+    <button class="btn" id="hmAuto">🤖 AUTO (activo)</button>
+    <button class="btn gh" id="hmHumM">💦 Forzar humidificación</button>
+    <button class="btn gh" id="hmDehM">❄️ Forzar deshumidificación</button>
+    <span style="color:var(--mut); font-size:.85rem">Consigna: <b id="hmSpL">50</b>% · banda ±2.5%</span>
+    <input type="range" id="hmSp" min="45" max="55" value="50" style="max-width:200px; display:block">
+  </div>
+  <canvas id="hmCv" width="900" height="300"></canvas>
+  <div class="panel" id="hmNow">Iniciando…</div>
+  <div class="row">
+    <div class="panel">
+      <b>💦 PROCESO 1: HUMIDIFICACIÓN (agregar agua en forma de vapor)</b>
+      <ol class="hmsteps" id="hmH">
+        <li>El sensor de la sala mide la RH y se la reporta al controlador.</li>
+        <li>RH está DEBAJO de la banda (consigna −2.5%) → el controlador enciende el humidificador.</li>
+        <li>Las varillas eléctricas evaporan agua limpia → VAPOR PURO (agrega humedad SIN enfriar el aire).</li>
+        <li>El ventilador mezcla ese vapor con el aire de suministro y lo empuja a la sala.</li>
+        <li>La RH sube; al entrar en banda, el controlador DETIENE la inyección (banda muerta).</li>
+      </ol>
+    </div>
+    <div class="panel">
+      <b>❄️ PROCESO 2: DESHUMIDIFICACIÓN (quitar agua por condensación)</b>
+      <ol class="hmsteps" id="hmD">
+        <li>El sensor de la sala mide la RH y se la reporta al controlador.</li>
+        <li>RH está ENCIMA de la banda (consigna +2.5%) → el serpentín se enfría POR DEBAJO del punto de rocío.</li>
+        <li>El vapor de agua que trae el aire CONDENSA sobre el serpentín frío → aparecen gotas.</li>
+        <li>Las gotas caen a la bandeja y salen por el DRENAJE de condensado (el agua sale del circuito).</li>
+        <li>El aire, ya seco, pasa por el RECALENTADOR y regresa a la sala: la RH baja.</li>
+      </ol>
+    </div>
+  </div>
+  <div class="panel">🔬 <b>¿Por qué el recalentador?</b> Al condensar, el aire sale muy frío. Si se devolviera así a la sala, el termostato reaccionaría y el equipo pelearía contra sí mismo (enfría para secar, pero calienta de más). El recalentador corrige la temperatura sin re-introducir humedad. Por eso los equipos de precisión controlan temperatura y humedad <b>al mismo tiempo</b>.</div>
+</div>
+
+<div class="card">
+  <h2>🧩 La cadena completa</h2>
+  <p style="text-align:center; font-size:1.05rem">
+    <b>Red + Generador</b> → <b>ATS</b> → <b>UPS</b> (rectificador → baterías → inversor) → <b>PDU</b> → <b>Racks</b><br>
+    <span style="color:var(--az)">…y el CRAC/CRAH enfriando y controlando la humedad, 24/7 ❄️</span>
+  </p>
+</div>
+
+</section>
+
+</main>
+<footer>Data Center Power Lab · Material de capacitación interna · Funciona sin internet</footer>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const SEEN=new Set(), TOTAL=15;
+function seen(k){ if(SEEN.has(k))return; SEEN.add(k); $('seenN').textContent=SEEN.size;
+  if(SEEN.size===TOTAL)$('prog').textContent='🎉 ¡15/15 simuladores explorados! Estás listo para la práctica en sitio.'; }
+
+/* ---- tabs ---- */
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act'));
+  document.querySelectorAll('section').forEach(x=>x.classList.remove('act'));
+  b.classList.add('act'); $(b.dataset.s).classList.add('act');
+  window.scrollTo({top:0});
+});
+
+/* ---- AC/DC ---- */
+let acMode=true, acF=1;
+ $('btnAC').onclick=()=>{acMode=true;$('btnAC').className='btn';$('btnDC').className='btn gh';
+  $('acdcInfo').innerHTML='<b>AC (Corriente Alterna):</b> la corriente cambia de sentido periódicamente — por eso la onda sube y baja cruzando el cero. En la red: 60 ciclos por segundo (60 Hz). <i>Analogía: la marea que va y viene.</i>'; seen('acdc');};
+ $('btnDC').onclick=()=>{acMode=false;$('btnDC').className='btn';$('btnAC').className='btn gh';
+  $('acdcInfo').innerHTML='<b>DC (Corriente Continua):</b> la corriente fluye <b>siempre en una sola dirección</b> — línea constante, sin cruzar el cero. Así trabajan las baterías. <i>Analogía: el río que fluye en un solo sentido.</i>'; seen('acdc');};
+ $('fSlider').oninput=e=>{acF=+e.target.value;$('fLbl').textContent=acF.toFixed(1);seen('acdc');};
+
+const acCv=$('acdcCv'), acx=acCv.getContext('2d');
+function drawAC(t){
+  const W=acCv.width,H=acCv.height; acx.clearRect(0,0,W,H);
+  const mid=70, A=45, tp=t/1000;
+  acx.strokeStyle='#24365c'; acx.beginPath(); acx.moveTo(0,mid); acx.lineTo(W,mid); acx.stroke();
+  acx.strokeStyle=acMode?'#38bdf8':'#4ade80'; acx.lineWidth=2.5; acx.beginPath();
+  for(let x=0;x<=W;x+=2){
+    const y=acMode? mid - A*Math.sin(x/70*acF + tp*2*acF) : mid;
+    x===0? acx.moveTo(x,y):acx.lineTo(x,y);
+  } acx.stroke();
+  if(acMode){acx.strokeStyle='#fbbf24';acx.setLineDash([4,4]);acx.beginPath();acx.moveTo(0,mid-A);acx.lineTo(W,mid-A);acx.moveTo(0,mid+A);acx.lineTo(W,mid+A);acx.stroke();acx.setLineDash([]);}
+  acx.fillStyle='#93a5c4'; acx.font='12px Segoe UI';
+  acx.fillText(acMode?'Forma de onda AC — la corriente invierte su sentido':'Forma de onda DC — polaridad constante',14,20);
+  const ty=170;
+  acx.strokeStyle='#24365c'; acx.strokeRect(40,ty-32,W-80,64);
+  const n=16, sp=(W-110)/n;
+  for(let i=0;i<n;i++){
+    let x;
+    if(acMode){ x=85+i*sp + 22*Math.sin(tp*2*acF*2 + i*0.9); }
+    else{ x=85+((i*sp + tp*80) % (W-110)); }
+    const g=acx.createRadialGradient(x,ty,1,x,ty,7);
+    g.addColorStop(0,acMode?'#7dd3fc':'#86efac'); g.addColorStop(1,acMode?'#0369a1':'#15803d');
+    acx.fillStyle=g; acx.beginPath(); acx.arc(x,ty,7,0,7); acx.fill();
+  }
+  acx.fillStyle='#e6edf7'; acx.font='bold 13px Segoe UI';
+  acx.fillText(acMode?'← electrones oscilan: van y vienen →':'→ electrones: siempre el mismo sentido →',60,ty+55);
+}
+
+/* ---- Transmisión ---- */
+ $('txV').oninput=e=>{
+  const V=+e.target.value; $('txVl').textContent=V;
+  const I=100e6/(V*1e3), Irel=I/(1e6/(100*1e3));
+  $('txI').textContent=Math.round(I).toLocaleString('es')+' A';
+  const p=Math.round(Irel*Irel*100); $('txP').textContent=p+'%';
+  $('txP').style.color=p<40?'var(--vd)':(p<100?'var(--am)':'var(--rj)');
+  $('txMsg').innerHTML = V>=200
+    ? '✅ Voltaje alto: la corriente baja y las pérdidas se reducen drásticamente. <b>Así viaja la energía a largas distancias.</b>'
+    : '⚠️ Voltaje bajo: la corriente es enorme y las pérdidas (I²R) se disparan. <b>Los transformadores (¡AC!) permiten elevar el voltaje y resolver esto.</b>';
+  seen('tx');
+};
+
+/* ---- Factor de potencia ---- */
+ $('fpS').oninput=e=>{
+  const fp=+e.target.value; $('fpLbl').textContent=fp.toFixed(2); seen('fp');
+  const L=120, base=L*fp, alt=L*Math.sqrt(1-fp*fp);
+  $('triP').setAttribute('d',`M 50 175 L ${50+base} 175 L 50 ${175-alt} Z`);
+  $('triKw').setAttribute('x',50+base/2-14); $('triKw').textContent='kW '+Math.round(fp*100);
+  $('triKvar').setAttribute('y',175-alt/2); $('triKvar').textContent='kVAR '+Math.round(alt);
+  $('triKva').setAttribute('x',50+base/2+10); $('triKva').setAttribute('y',175-alt/2-8); $('triKva').textContent='kVA 100';
+  $('beer').style.height=(fp*100)+'%';
+  $('fpKw').textContent=Math.round(fp*100)+' kW';
+  $('fpKvar').textContent=Math.round(alt)+' kVAR';
+};
+
+/* ---- Estrella Y ---- */
+ $('yV').oninput=e=>{
+  const V=+e.target.value; $('yVl').textContent=V; seen('y');
+  const r=V*0.45, cx=150, cy=150;
+  const p1=[cx,cy-r], p2=[cx+r*0.866,cy+r*0.5], p3=[cx-r*0.866,cy+r*0.5];
+  const set=(id,p,q)=>{$(id).setAttribute('x1',p[0]);$(id).setAttribute('y1',p[1]);$(id).setAttribute('x2',q[0]);$(id).setAttribute('y2',q[1]);};
+  set('yl1',[cx,cy],p1); set('yl2',[cx,cy],p2); set('yl3',[cx,cy],p3); set('yLin',p1,p2);
+  $('yF1t').setAttribute('y',cy-r-10); $('yF2t').setAttribute('x',cx+r*0.866+6); $('yF2t').setAttribute('y',cy+r*0.5+4);
+  $('yF3t').setAttribute('x',cx-r*0.866-26); $('yF3t').setAttribute('y',cy+r*0.5+4);
+  $('yLL').setAttribute('x',(p1[0]+p2[0])/2+26); $('yLL').setAttribute('y',(p1[1]+p2[1])/2-6);
+  $('yFv').textContent=V+' V'; $('yLv').textContent=Math.round(V*1.732)+' V';
+};
+
+/* ---- Batería ---- */
+const bCv=$('batCv'), bx=bCv.getContext('2d');
+function drawBat(t){
+  const W=bCv.width,H=bCv.height; bx.clearRect(0,0,W,H);
+  bx.strokeStyle='#24365c'; bx.lineWidth=3;
+  bx.strokeRect(W/2-180,40,360,120);
+  bx.fillStyle='#16305a'; bx.fillRect(W/2-140,60,70,80); bx.fillRect(W/2+70,60,70,80);
+  bx.fillStyle='#f87171'; bx.font='bold 30px Segoe UI'; bx.textAlign='center';
+  bx.fillText('−',W/2-105,110); bx.fillStyle='#4ade80'; bx.fillText('+',W/2+105,110);
+  bx.fillStyle='#93a5c4'; bx.font='12px Segoe UI';
+  bx.fillText('ÁNODO',W/2-105,155); bx.fillText('CÁTODO',W/2+105,155);
+  for(let i=0;i<9;i++){
+    const x=W/2-60+((i*28 + t/25)%120);
+    bx.fillStyle='#fbbf24'; bx.beginPath(); bx.arc(x,100,6,0,7); bx.fill();
+  }
+  bx.fillStyle='#e6edf7'; bx.font='bold 13px Segoe UI';
+  bx.fillText('La química empuja las cargas SIEMPRE en el mismo sentido → DC',W/2,25);
+  bx.textAlign='left';
+}
+
+/* ---- UPS: info + fallas por componente ---- */
+const UPSINFO={
+  bRed:'<b>Red AC:</b> fuente principal de energía.',
+  bRec:'<b>Rectificador:</b> convierte AC → DC. Alimenta el bus DC y recarga las baterías. Primera mitad de la "doble conversión".',
+  bBus:'<b>Bus DC:</b> barra de corriente continua donde convergen rectificador y baterías. El corazón del UPS.',
+  bBat:'<b>Baterías:</b> almacenan energía en DC. Se conectan al bus cuando la red falla: cero interrupción.',
+  bInv:'<b>Inversor ★:</b> convierte DC → AC. Es el componente que toma la DC del bus y la reconvierte en AC para la carga.',
+  bCar:'<b>Carga:</b> los equipos TI. En un online jamás notan una falla de red: 0 ms.',
+  byp:'<b>Bypass estático:</b> ruta de reserva que alimenta la carga DIRECTO desde la red, sin conversión. Se activa ante fallas internas del UPS (Bus DC o Inversor). Como no convierte nada, no puede reemplazar al inversor: solo lo sustituye en emergencia.'
+};
+const UPS_DEFAULT='<b class="okT">Estado: NORMAL.</b> Flujo: AC entrada → Rectificador → Bus DC → Inversor → Carga. La doble conversión ocurre <b>todo el tiempo</b>, por eso la transferencia a baterías es de <b>0 ms</b>.';
+const FAILS={
+  bRed:{bad:['bRed'],dim:['bRec'],off:['fp1','fp2'],bat:true,
+    st:'<b class="amT">RED CAÍDA.</b> El rectificador se queda sin entrada… pero las <b>baterías</b> toman el Bus DC y el <b>inversor</b> sigue entregando AC perfecta. Interrupción: <b class="okT">0 ms</b>.'},
+  bRec:{bad:['bRec'],off:['fp1','fp2'],bat:true,
+    st:'<b class="amT">RECTIFICADOR EN FALLA.</b> La red está viva pero nadie convierte AC→DC… las <b>baterías</b> asumen el Bus DC y el inversor sigue normal. La carga no nota nada (hasta agotar baterías).'},
+  bBus:{bad:['bBus'],dim:['bRec','bBat','bInv'],off:['fp2','fp3','fp4'],byp:true,
+    st:'<b class="badT">BUS DC EN FALLA → TRANSFERENCIA AL BYPASS.</b> ¡Las baterías NO pueden ayudar: su DC llega a un bus muerto! El <b>bypass estático</b> entrega la red directo a la carga (2–4 ms). Lección: las baterías cubren fallas de FUENTE, no de CONVERSIÓN.'},
+  bInv:{bad:['bInv'],dim:['bBat'],off:['fp3','fp4'],byp:true,
+    st:'<b class="badT">INVERSOR EN FALLA → TRANSFERENCIA AL BYPASS.</b> Sin inversor nadie convierte DC→AC: las baterías son inútiles para la carga. El <b>bypass estático</b> toma el control: red AC → carga directa (2–4 ms).'},
+  bBat:{bad:['bBat'],off:['fpBat'],
+    st:'<b class="amT">BATERÍAS EN FALLA.</b> La operación sigue NORMAL (red → rectificador → bus → inversor)… pero <b>sin respaldo</b>. Prueba el botón de abajo: ¿qué pasa si la red falla ahora?'}
+};
+function upsReset(){
+  ['bRed','bRec','bBus','bInv','bBat','bCar'].forEach(id=>$(id).classList.remove('bad','dim'));
+  ['fp1','fp2','fp3','fp4'].forEach(id=>$(id).classList.remove('off'));
+  $('fpBat').style.display='none'; $('fpByp').style.display='none';
+}
+function showUpsInfo(key){
+  $('upsInfo').innerHTML=UPSINFO[key]||UPSINFO.byp;
+  const slot=$('upsFailSlot'); slot.innerHTML='';
+  if(FAILS[key]){
+    const b=document.createElement('button'); b.className='btn'; b.style.marginTop='10px';
+    b.textContent='⚡ Simular falla de este componente';
+    b.onclick=()=>doUpsFail(key);
+    slot.appendChild(b);
+    if(key==='bBat'){
+      const b2=document.createElement('button'); b2.className='btn'; b2.style.marginTop='10px';
+      b2.textContent='⚡ ¿Y si la red también falla?';
+      b2.onclick=()=>{
+        upsReset();
+        ['fp1','fp2','fp3','fp4'].forEach(id=>$(id).classList.add('off'));
+        ['bRed','bBat','bCar'].forEach(id=>$(id).classList.add('bad'));
+        $('upsStatus').innerHTML='<b class="badT">🚨 APAGÓN TOTAL.</b> Baterías y red caídas: ni el bypass puede ayudar (¡este también depende de la red!). La carga perdió energía — por eso las baterías se prueban y reemplazan periódicamente.';
+        seen('ups');
+      };
+      slot.appendChild(b2);
+    }
+  }
+}
+function doUpsFail(key){
+  const f=FAILS[key]; upsReset();
+  f.bad.forEach(id=>$(id).classList.add('bad'));
+  (f.dim||[]).forEach(id=>$(id).classList.add('dim'));
+  (f.off||[]).forEach(id=>$(id).classList.add('off'));
+  if(f.bat)$('fpBat').style.display='';
+  if(f.byp)$('fpByp').style.display='';
+  $('upsStatus').innerHTML=f.st;
+  seen('ups');
+}
+document.querySelectorAll('#upsSvg .blk').forEach(b=>b.addEventListener('click',()=>showUpsInfo(b.id)));
+ $('pByp').addEventListener('click',()=>showUpsInfo('byp'));
+ $('tByp').addEventListener('click',()=>showUpsInfo('byp'));
+ $('upsResetBtn').onclick=()=>{ upsReset(); $('upsStatus').innerHTML=UPS_DEFAULT; };
+
+/* ---- Los 3 tipos de UPS ---- */
+let u3ev=null, u3Tok=0;
+const U3ST={
+  offline:{
+    corte:'🟡 Transfirió a batería tras un <b>hueco de 2–10 ms</b>: la carga sí lo sufrió. Batería: SÍ. Es el UPS más básico y económico.',
+    sag:'🟡 Detectó el sag y transfirió a batería (2–10 ms). Gasta batería para algo que un AVR resolvería sin usarla.',
+    surge:'🔴 <b>No corrige</b> activamente: la sobretensión pasó a la carga (solo protección limitada tipo MOV).'},
+  linea:{
+    corte:'🟡 Transfirió a inversor en <b>2–4 ms</b> (hueco breve; la mayoría de fuentes lo toleran). Batería: SÍ.',
+    sag:'🟢 El <b>AVR</b> corrigió el sag cambiando taps del autotransformador: <b>sin usar batería</b>.',
+    surge:'🟢 El <b>AVR</b> recortó la sobretensión con sus taps: <b>sin usar batería</b>.'},
+  online:{
+    corte:'🟢 <b>0 ms.</b> La onda se regenera siempre: la batería alimentó el Bus DC sin conmutar nada. La carga jamás lo nota.',
+    sag:'🟢 El sag murió en el rectificador: la carga recibió onda perfecta. <b>Batería: ni siquiera se usó.</b>',
+    surge:'🟢 La doble conversión regenera la onda: la carga no vio nada. <b>Batería: ni siquiera se usó.</b>'}
+};
+function ampU3(kind,x){
+  if(!u3ev)return 1;
+  const ev=0.42;
+  if(kind==='online')return 1;
+  if(kind==='offline'){
+    if(u3ev==='corte')return x<ev?1:(x<ev+0.05?0.06:1);
+    if(u3ev==='sag')return x<ev?1:(x<ev+0.07?0.55:1);
+    return x<ev?1:1.18;
+  }
+  if(u3ev==='corte')return x<ev?1:(x<ev+0.035?0.12:1);
+  if(u3ev==='sag')return x<ev?1:(x<ev+0.03?0.55:1);
+  return x<ev?1:(x<ev+0.03?1.2:1);
+}
+function drawU3(i,p){
+  const cv=$('u3c'+i), ctx=cv.getContext('2d');
+  const W=cv.width,H=cv.height,mid=H/2;
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#24365c'; ctx.setLineDash([4,4]);
+  ctx.beginPath(); ctx.moveTo(0,mid-30); ctx.lineTo(W,mid-30); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#93a5c4'; ctx.font='11px Segoe UI';
+  ctx.fillText('tensión nominal en la carga',8,14);
+  const kinds=['offline','linea','online'], cycles=15, ev=0.42;
+  if(u3ev&&p>ev){
+    ctx.strokeStyle='#fbbf24'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(W*ev,6); ctx.lineTo(W*ev,H-6); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='#fbbf24'; ctx.fillText('evento',W*ev+4,H-6);
+  }
+  ctx.lineWidth=2.2; ctx.strokeStyle=['#38bdf8','#fbbf24','#4ade80'][i];
+  ctx.beginPath();
+  const lim=W*p;
+  for(let px=0;px<=lim;px+=2){
+    const x=px/W, a=ampU3(kinds[i],x);
+    const y=mid-30*a*Math.sin(x*cycles*2*Math.PI);
+    px===0?ctx.moveTo(px,y):ctx.lineTo(px,y);
+  }
+  ctx.stroke(); ctx.lineWidth=1;
+}
+for(let i=0;i<3;i++)drawU3(i,1);
+document.querySelectorAll('[data-ev]').forEach(b=>b.onclick=()=>{
+  u3ev=b.dataset.ev; u3Tok++; const my=u3Tok; seen('tipos');
+  document.querySelectorAll('[data-ev]').forEach(x=>x.className=x===b?'btn':'btn gh');
+  const t0=performance.now();
+  (function fr(){
+    if(u3Tok!==my)return;
+    const p=Math.min(1,(performance.now()-t0)/1400);
+    for(let i=0;i<3;i++)drawU3(i,p);
+    if(p<1)requestAnimationFrame(fr);
+    else{
+      const ids=['u3s0','u3s1','u3s2'], kinds=['offline','linea','online'];
+      ids.forEach((id,i)=>$(id).innerHTML=U3ST[kinds[i]][u3ev]);
+    }
+  })();
+});
+
+/* ---- Tiempo transferencia ---- */
+ $('ttRun').onclick=()=>{
+  seen('tt'); $('gapA').classList.remove('show'); $('gapB').classList.remove('show');
+  $('ttOut').innerHTML='Falla de red en curso… observa las dos líneas de alimentación.';
+  setTimeout(()=>{ $('gapB').classList.add('show');
+    $('ttOut').innerHTML='🟢 <b>Online:</b> la carga nunca notó nada (0 ms — siempre está convirtiendo). &nbsp; 🟡 <b>Standby:</b> sufrió un hueco de 2–10 ms mientras conmutaba.';
+  },700);
+};
+
+/* ---- N+1 ---- */
+let n1mode=true;
+const modsBox=$('modsBox');
+function renderMods(){
+  modsBox.innerHTML='';
+  const n=n1mode?4:3;
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div');
+    d.className='mod'+(i===3&&n1mode?' extra':'');
+    d.innerHTML=(i===3&&n1mode?'Módulo +1<br><small>respaldo</small>':'Módulo '+(i+1)+'<br><small>100 kW</small>');
+    d.onclick=()=>{d.classList.toggle('falla'); updN1(); seen('n1');};
+    modsBox.appendChild(d);
+  }
+  updN1();
+}
+function updN1(){
+  const all=[...modsBox.children];
+  const vivos=all.filter(m=>!m.classList.contains('falla')).length;
+  const cap=vivos*100, dem=300, st=$('n1State');
+  if(cap>=dem) st.innerHTML='<b class="okT">✅ OPERANDO SIN DEGRADACIÓN.</b> Capacidad disponible: '+cap+' kW ≥ demanda 300 kW.'+(n1mode?' La falla fue tolerada gracias al módulo +1.':'.');
+  else st.innerHTML='<b class="badT">🚨 CAPACIDAD INSUFICIENTE.</b> Capacidad disponible: '+cap+' kW &lt; demanda 300 kW.'+(n1mode?'':' Esto pasa cuando operas solo con N: no hay margen para una falla.');
+}
+ $('n1Mode').onclick=()=>{ n1mode=!n1mode;
+  $('n1Mode').textContent='Modo actual: '+(n1mode?'N+1 (4 módulos)':'N (3 módulos)')+' ▸ cambiar';
+  renderMods(); };
+ $('n1Fix').onclick=()=>{renderMods();};
+renderMods();
+
+/* ---- Apagón ---- */
+let apRun=0, apPaused=false, apSpeed=2.4, apSimT=0, apBat=100, apPhase='';
+function setSt(id,cls,txt){ const e=$(id); e.className='stp'+(cls?' '+cls:'');
+  const b=e.querySelector('.bdg');
+  b.className='bdg '+(cls==='err'?'bad':cls==='done'?'ok':cls==='act'?'warn':'');
+  b.textContent=txt; }
+function knob(pos){ const k=$('atsKnob'); k.classList.remove('moving');
+  k.classList.toggle('posGen',pos==='gen'); k.textContent=pos==='gen'?'EN GEN':'EN RED'; }
+function updateBat(){ $('batBar').style.width=apBat+'%'; $('batPct').textContent=Math.round(apBat)+'%';
+  $('batBar').style.background=apBat>70?'var(--vd)':apBat>40?'var(--am)':'var(--rj)'; }
+async function apSleep(simSec){
+  const my=apRun; let left=simSec*1000*apSpeed;
+  while(left>0){
+    if(apRun!==my)throw 'cancel';
+    if(!apPaused){ const st=Math.min(60,left); await new Promise(r=>setTimeout(r,st)); left-=st; }
+    else await new Promise(r=>setTimeout(r,80));
+  }
+}
+ $('tsPause').onclick=()=>{ apPaused=!apPaused; $('tsPause').textContent=apPaused?'▶ Continuar':'⏸ Pausar'; };
+ $('tsSlow').onclick=()=>{ apSpeed=2.4; $('tsSlow').className='btn gh act'; $('tsNorm').className='btn gh'; };
+ $('tsNorm').onclick=()=>{ apSpeed=1;   $('tsSlow').className='btn gh'; $('tsNorm').className='btn gh act'; };
+ $('tsRun').onclick=async()=>{
+  apRun++; const my=apRun;
+  apPaused=false; $('tsPause').textContent='⏸ Pausar';
+  $('tsRun').textContent='🔄 Reiniciar apagón';
+  setSt('stRed','','OK'); setSt('stUps','','En línea'); setSt('stGen','','En espera');
+  setSt('stAts','','EN RED'); setSt('stCar','','Alimentada');
+  knob('red'); $('tsLog').innerHTML=''; $('apSum').style.display='none';
+  apBat=100; apPhase=''; updateBat();
+  seen('apagon');
+  let apTTrans=0, apTRetrans=0;
+  const tickInt=setInterval(()=>{
+    if(apRun!==my){ clearInterval(tickInt); return; }
+    if(apPaused)return;
+    apSimT+=0.1/apSpeed;
+    $('apClock').textContent='t = '+apSimT.toFixed(1)+' s';
+    if(apPhase==='bat'){ apBat=Math.max(55,apBat-0.24/apSpeed); updateBat(); }
+    else if(apPhase==='rec'){ apBat=Math.min(100,apBat+0.25/apSpeed); updateBat(); }
+  },100);
+  const L=$('tsLog');
+  const add=h=>{ const li=document.createElement('li'); li.innerHTML='<b>t='+apSimT.toFixed(1)+' s</b> · '+h; L.prepend(li); };
+  try{
+    setSt('stRed','err','CAÍDA'); add('<b>🌑 La red comercial CAE.</b>');
+    setSt('stUps','act','BATERÍAS (0 ms)'); setSt('stCar','done','Alimentada'); apPhase='bat';
+    add('⚡ UPS: transfirió a baterías en <b>0 ms</b> — la carga no lo notó.');
+    await apSleep(0.6);
+    setSt('stAts','act','FALLA DETECTADA');
+    add('<b>ATS:</b> temporización de detección vencida → <b>ordena el arranque del generador</b>.');
+    setSt('stGen','act','ARRANCANDO'); add('🏭 Generador: motor girando (cranking)…');
+    await apSleep(1.6);
+    setSt('stGen','act','ESTABILIZANDO'); add('🏭 Generador: regulando a 480 V / 60 Hz…');
+    await apSleep(1.8);
+    setSt('stGen','done','LISTO');
+    setSt('stAts','act','⇄ TRANSFIRIENDO'); $('atsKnob').classList.add('moving');
+    add('<b>ATS:</b> recibió la señal "generador listo" → <b>TRANSFIRIENDO LA CARGA…</b>');
+    await apSleep(1.2);
+    apTTrans=apSimT; knob('gen');
+    add('<b>✅ ATS: TRANSFERENCIA COMPLETADA.</b> La carga ahora la alimenta el GENERADOR.');
+    setSt('stAts','done','EN GENERADOR'); setSt('stUps','done','RECARGANDO BATERÍAS'); apPhase='rec';
+    add('🎯 El UPS cubrió todo el hueco (t = 0 → '+apTTrans.toFixed(1)+' s).');
+    await apSleep(1.6);
+    add('🏭 Generador: sosteniendo la carga (autonomía limitada por combustible: horas).');
+    await apSleep(1.2);
+    setSt('stRed','done','RESTABLECIDA'); add('🌐 La red comercial vuelve — pero el ATS <b>no</b> regresa de inmediato.');
+    setSt('stAts','act','TEMPORIZANDO RETRANSFERENCIA');
+    add('<b>ATS:</b> verificando estabilidad de la red (temporizador de retransferencia, típ. 5 min — acelerado aquí).');
+    await apSleep(2.2);
+    setSt('stAts','act','⇄ RETRANSFIRIENDO'); $('atsKnob').classList.add('moving');
+    add('<b>ATS: RETRANSFIRIENDO la carga a la RED…</b>');
+    await apSleep(1.0);
+    apTRetrans=apSimT; knob('red'); apPhase='';
+    add('<b>✅ ATS: la carga volvió a la RED ('+apTRetrans.toFixed(1)+' s).</b>');
+    setSt('stAts','done','EN RED'); setSt('stUps','done','BATERÍAS 100%'); updateBat();
+    setSt('stGen','act','ENFRIANDO'); add('🏭 Generador: enfriamiento sin carga (~5 min reales)…');
+    await apSleep(1.6);
+    setSt('stGen','','DETENIDO');
+    add('🏭 Generador detenido, listo para la próxima emergencia. Calentador de camisas manteniendo 45 °C 🔥');
+    $('apSum').style.display='';
+    $('apSum').innerHTML='📋 <b>Resumen:</b> el UPS cubrió de t=0 a t≈'+apTTrans.toFixed(1)+' s con <b>0 ms de interrupción</b> · El ATS cambió de fuente <b>2 veces</b>: transferencia (→ generador) y retransferencia (→ red, con temporización) · El generador enfrió antes de detenerse · <b class="okT">La carga TI nunca dejó de recibir energía.</b>';
+  }catch(e){ if(e!=='cancel')console.error(e); }
+  clearInterval(tickInt);
+};
+
+/* ---- Walk-in ---- */
+ $('wiRun').onclick=async()=>{
+  seen('wi'); const box=$('wiBars'); box.innerHTML=''; $('wiRun').disabled=true;
+  const pasos=[['25%','✓ V y Hz estables'],['50%','✓ V y Hz estables'],['75%','✓ V y Hz estables'],['100%','✓ Prueba exitosa']];
+  $('wiOut').innerHTML='Arranque completado. Aplicando carga en escalones…';
+  for(const [pct,msg] of pasos){
+    const b=document.createElement('div'); b.className='wbar'; b.textContent=pct; box.appendChild(b);
+    await new Promise(r=>setTimeout(r,80)); b.style.height=pct;
+    await new Promise(r=>setTimeout(r,1100));
+    $('wiOut').innerHTML='Escalón <b>'+pct+'</b> — '+msg;
+  }
+  $('wiOut').innerHTML='<b class="okT">✅ Walk-in test completado:</b> la carga se aplicó gradualmente, sin sobrecargas, verificando estabilidad de frecuencia y voltaje en cada escalón.';
+  $('wiRun').disabled=false;
+};
+
+/* ---- Calentador de camisas ---- */
+let htData={on:null,off:null}, htOn=true, htBusy=false, htRun=0;
+const htReady={};
+function htAxes(ctx){
+  const W=900,H=260,L=52,T=16,R=16,B=34;
+  const xOf=t=>L+(t/90)*(W-L-R), yOf=v=>T+(1-(v-20)/(95-20))*(H-T-B);
+  ctx.strokeStyle='#24365c'; ctx.fillStyle='#93a5c4'; ctx.font='11px Segoe UI';
+  [20,40,60,80,95].forEach(v=>{
+    ctx.beginPath(); ctx.moveTo(L,yOf(v)); ctx.lineTo(W-R,yOf(v)); ctx.stroke();
+    ctx.fillText(v+'°',10,yOf(v)+4);
+  });
+  [0,15,30,45,60,75,90].forEach(t=>ctx.fillText(t+'s',xOf(t)-8,H-14));
+  ctx.strokeStyle='#4ade80'; ctx.setLineDash([5,4]);
+  ctx.beginPath(); ctx.moveTo(L,yOf(75)); ctx.lineTo(W-R,yOf(75)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle='#4ade80'; ctx.fillText('75 °C = listo para aceptar 100% de carga',L+8,yOf(75)-6);
+  return {xOf,yOf};
+}
+function htDraw(){
+  const ctx=$('htCv').getContext('2d');
+  ctx.clearRect(0,0,900,260);
+  const {xOf,yOf}=htAxes(ctx);
+  [['on','#f59e0b','Calentador ON'],['off','#38bdf8','Calentador OFF']].forEach(([k,c,lab],i)=>{
+    if(htData[k]&&htData[k].length){
+      ctx.strokeStyle=c; ctx.lineWidth=2.5; ctx.beginPath();
+      htData[k].forEach((T,j)=>{ const x=xOf(j*0.5), y=yOf(T); j===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+      ctx.stroke(); ctx.lineWidth=1;
+    }
+    ctx.fillStyle=c; ctx.fillRect(700+i*110,10,14,10);
+    ctx.font='11px Segoe UI'; ctx.fillText(lab,720+i*110,19);
+  });
+}
+function htState(){ $('htState').innerHTML='Calentador: '+(htOn?'🔥 ON (refrigerante a 45 °C, listo para arrancar)':'❄️ OFF (motor frío a 23 °C)'); }
+ $('htOnT').onclick=()=>{ htOn=true;  $('htOnT').className='btn'; $('htOffT').className='btn gh'; htState(); };
+ $('htOffT').onclick=()=>{ htOn=false; $('htOffT').className='btn'; $('htOnT').className='btn gh'; htState(); };
+ $('htClear').onclick=()=>{ htRun++; htBusy=false; htData={on:null,off:null};
+  Object.keys(htReady).forEach(k=>delete htReady[k]);
+  $('htLog').innerHTML=''; $('htReady').textContent='Ejecuta una prueba con el calentador ON y otra con OFF para comparar los tiempos.'; htDraw(); };
+ $('htStart').onclick=async()=>{
+  if(htBusy)return; htBusy=true; htRun++; const my=htRun;
+  seen('camisa');
+  const on=htOn, key=on?'on':'off';
+  htData[key]=[];
+  const T0=on?45:23, k=on?0.13:0.032, crank=on?1.5:3;
+  let readyT=null, lCrank=false, l40=false, lAcc=false;
+  const L=$('htLog');
+  const add=h=>{ const li=document.createElement('li'); li.innerHTML=h; L.prepend(li); };
+  add(on?'🚀 Arranque ordenado — refrigerante a 45 °C (calentador ON)':'🚀 Arranque ordenado — refrigerante FRÍO a 23 °C (calentador OFF)');
+  for(let i=0;i<=180;i++){
+    if(htRun!==my){ htBusy=false; return; }
+    const t=i*0.5; let T;
+    if(t<crank)T=T0; else T=90-(90-T0)*Math.exp(-(t-crank)*k);
+    htData[key].push(T);
+    if(!lCrank&&t>=crank){ lCrank=true; add(on?'🔥 Motor precalentado: arranque inmediato y suave.':'🧊 Motor frío: girando con aceite viscoso — arranque prolongado…'); }
+    if(!on&&!l40&&T>=40){ l40=true; add('⚠️ Choque térmico: expansión desigual de los metales → desgaste interno.'); }
+    if(on&&!lAcc&&t>=crank+1){ lAcc=true; add('⚙️ Aceptando carga progresiva…'); }
+    if(readyT===null&&T>=75){ readyT=t; add('<b class="okT">✅ LISTO para aceptar 100% de carga (t='+t.toFixed(1)+' s)</b>'); }
+    htDraw();
+    await new Promise(r=>setTimeout(r,30));
+  }
+  htReady[key]=readyT;
+  const line=[];
+  if(htReady.on!=null)line.push('🔥 ON: listo en <b>'+htReady.on.toFixed(1)+' s</b>');
+  if(htReady.off!=null)line.push('🧊 OFF: listo en <b>'+htReady.off.toFixed(1)+' s</b> + desgaste por choque térmico');
+  $('htReady').innerHTML=line.join(' &nbsp;·&nbsp; ');
+  if(!on)add('💡 El calentador de camisas (1–3 kW continuos) habría reducido este tiempo a ~10 s y evitado el choque térmico.');
+  else add('🎯 1–3 kW continuos compran segundos críticos y vida útil del motor.');
+  htBusy=false;
+};
+htState(); htDraw();
+
+/* ---- Control de velocidad del generador (RPM -> Hz) ---- */
+const gv={rpm:1800,fuel:60,load:0,auto:true,ph:0,evT:null,minHz:60,maxHz:60,recoverT:null,uiN:0};
+function gvF(){ return gv.rpm/30; }
+function updGVBtns(){
+  $('gvAuto').textContent=gv.auto?'🎛️ Control automático: ON (activo)':'🎛️ Control automático: OFF (manual)';
+  $('gvAuto').className='btn'+(gv.auto?'':' gh');
+  $('gvFuel').disabled=gv.auto; $('gvFuel').style.opacity=gv.auto?0.4:1;
+}
+ $('gvAuto').onclick=()=>{
+  gv.auto=!gv.auto; updGVBtns();
+  gvLogAdd(gv.auto
+    ?'🎛️ <b>Control automático ACTIVADO:</b> el gobernador ajustará el combustible para sostener 1800 RPM / 60 Hz ante cualquier carga.'
+    :'🎛️ <b>Control automático DESACTIVADO:</b> tú fijas el combustible. Aplica carga y observa cómo la frecuencia se hunde con el motor.');
+  seen('vfd');
+};
+ $('gvFuel').oninput=e=>{ gv.fuel=+e.target.value; $('gvFuelLbl').textContent=gv.fuel+'%'; if(!gv.auto)seen('vfd'); };
+document.querySelectorAll('.gvld').forEach(b=>b.onclick=()=>{
+  const L=+b.dataset.load;
+  gv.load=L;
+  document.querySelectorAll('.gvld').forEach(x=>x.className='btn gh');
+  b.className='btn';
+  gv.minHz=60; gv.maxHz=60; gv.recoverT=null; gv.evT=0;
+  gvLogAdd('⚡ <b>Carga al '+L+'%</b> — el motor frena y las RPM caen (menos RPM = menos Hz).'
+    +(gv.auto?' El gobernador abrirá el combustible para recuperar 1800 RPM.':' El combustible está fijo en manual: mira dónde se asienta la frecuencia.'));
+  seen('vfd');
+});
+function gvLogAdd(h){
+  const li=document.createElement('li'); li.innerHTML=h;
+  const L=$('gvLog'); L.prepend(li);
+  while(L.children.length>5)L.lastChild.remove();
+}
+updGVBtns();
+function drawGV(){
+  // física: el punto de equilibrio depende del combustible y la carga
+  const target=gv.fuel*30 - gv.load*4;
+  gv.rpm+=(target-gv.rpm)*0.028;
+  if(gv.rpm<0)gv.rpm=0;
+  if(gv.auto){
+    const err=1800-gv.rpm;
+    gv.fuel=Math.min(100,Math.max(3,gv.fuel+err*0.0018));
+    $('gvFuelLbl').textContent=Math.round(gv.fuel)+'%';
+  }
+  const f=gvF(); gv.ph+=f*0.0022;
+  if(gv.evT!==null){
+    gv.evT+=1/60;
+    gv.minHz=Math.min(gv.minHz,f); gv.maxHz=Math.max(gv.maxHz,f);
+    if(gv.recoverT===null&&Math.abs(f-60)<=0.3)gv.recoverT=gv.evT;
+  }
+  const ctx=$('gvCv').getContext('2d'); ctx.clearRect(0,0,900,250);
+  const ok=Math.abs(f-60)<=0.5;
+  // onda de salida
+  const oy=78, A=36;
+  ctx.strokeStyle='#24365c'; ctx.beginPath(); ctx.moveTo(0,oy); ctx.lineTo(900,oy); ctx.stroke();
+  ctx.strokeStyle=ok?'#4ade80':'#f87171'; ctx.lineWidth=2.2; ctx.beginPath();
+  const cyc=6*f/60;
+  for(let x=0;x<=880;x+=2){
+    const y=oy-A*Math.sin(x/880*cyc*2*Math.PI+gv.ph);
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke(); ctx.lineWidth=1;
+  ctx.fillStyle='#93a5c4'; ctx.font='12px Segoe UI';
+  ctx.fillText('Salida del alternador — f = (RPM × 4 polos) / 120',20,16);
+  ctx.fillStyle=ok?'#4ade80':'#f87171'; ctx.font='bold 15px Segoe UI';
+  ctx.fillText(f.toFixed(1)+' Hz  '+(ok?'✓ DENTRO DE ESPEC (60 ± 0.5)':'✗ FUERA DE ESPEC — riesgo para los equipos TI'),20,38);
+  // barras
+  function bar(y,label,val,max,unit,col,ref){
+    ctx.fillStyle='#93a5c4'; ctx.font='11px Segoe UI'; ctx.fillText(label,60,y-5);
+    ctx.fillStyle='#1a2745'; ctx.fillRect(60,y,560,20);
+    ctx.fillStyle=col; ctx.fillRect(60,y,Math.max(3,560*val/max),20);
+    if(ref){ const rx=60+560*ref/max; ctx.strokeStyle='#e6edf7'; ctx.setLineDash([4,3]);
+      ctx.beginPath(); ctx.moveTo(rx,y); ctx.lineTo(rx,y+20); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.fillStyle='#e6edf7'; ctx.font='bold 11px Segoe UI';
+    ctx.fillText(val.toFixed(0)+unit,630,y+14);
+  }
+  bar(140,'RPM del motor (línea blanca = 1800 RPM)',gv.rpm,2000,' rpm',gv.auto?'#38bdf8':'#93a5c4',1800);
+  bar(175,'Frecuencia de salida (línea blanca = 60 Hz)',f,70,' Hz',ok?'#4ade80':'#f87171',60);
+  bar(210,'Combustible inyectado'+(gv.auto?' (lo mueve el gobernador)':' (manual)'),gv.fuel,100,'%','#f59e0b',null);
+  ctx.fillStyle='#64748b'; ctx.font='11px Segoe UI';
+  ctx.fillText('Carga aplicada: '+gv.load+'%',740,140);
+  // panel de estado
+  if(++gv.uiN%12===0){
+    const dev=f-60;
+    let s='<b>Modo:</b> '+(gv.auto?'🤖 Automático (gobernador persigue 1800 RPM)':'✋ Manual (combustible fijo)')
+      +' · <b>Carga:</b> '+gv.load+'% · <b>Desvío:</b> '+(dev>=0?'+':'')+dev.toFixed(2)+' Hz';
+    if(gv.evT!==null&&gv.recoverT!==null){
+      const mx=Math.max(Math.abs(60-gv.minHz),Math.abs(gv.maxHz-60));
+      s+='<br>📈 Último evento: desvío máximo <b>'+mx.toFixed(1)+' Hz</b> · recuperó 60 Hz en <b>'+gv.recoverT.toFixed(1)+' s</b>'
+        +(gv.auto?' (abriendo combustible hasta '+Math.round(gv.fuel)+'%)':'');
+    }
+    $('gvState').innerHTML=s;
+  }
+}
+
+/* ---- Derating ---- */
+ $('drT').oninput=e=>{
+  const T=+e.target.value; $('drTl').textContent=T; seen('der');
+  const cap=T<=30?100:Math.max(55,Math.round(100-(T-30)*1.33));
+  $('drPct').textContent=cap+'%'; $('drAmp').textContent=Math.round(32*cap/100)+' A';
+  const bar=$('drBar'); bar.style.width=cap+'%';
+  bar.style.background=cap>85?'var(--vd)':cap>70?'var(--am)':'var(--rj)';
+  $('drPct').style.color=cap>85?'var(--vd)':cap>70?'var(--am)':'var(--rj)';
+};
+
+/* ---- Humedad extremos ---- */
+ $('huS').oninput=e=>{
+  const h=+e.target.value; $('huL').textContent=h; seen('hu');
+  const p=$('huPanel');
+  if(h<40){ p.className='low';
+    p.innerHTML='<div class="emo">⚡🌵</div><h3 class="amT">Humedad BAJA (&lt; 40%): SECO = CHISPAS</h3><p><b>Acumulación de electricidad estática</b> con riesgo de descargas <b>ESD</b> que dañan componentes.<br>Acción: humidificar / monitorear. <span class="note">❌ La condensación NO ocurre con humedad baja.</span></p>';
+  } else if(h<=60){ p.className='good';
+    p.innerHTML='<div class="emo">✅</div><h3 class="okT">Zona segura (40–60%)</h3><p>Condiciones ideales. Mnemotecnia: <b>SECO = chispas · HÚMEDO = gotas</b></p>';
+  } else { p.className='high';
+    p.innerHTML='<div class="emo">💧🧪</div><h3 style="color:var(--az)">Humedad ALTA (&gt; 60%): HÚMEDO = GOTAS</h3><p><b>Condensación y corrosión</b> en componentes electrónicos, además de <b>riesgo de cortocircuitos</b>.<br>Acción: deshumidificar / aumentar disipación.</p>';
+  }
+};
+
+/* ---- Circuito de humidificación / deshumidificación ---- */
+const hm={rh:47,sp:50,scen:'estable',auto:true,humOn:false,dehOn:false,humReq:false,dehReq:false,
+  humT:0,dehT:0,fan:0,ph:0,steam:[],drops:[],drain:[],hist:[],lastT:0,uiN:0};
+function hmTick(dt){
+  if(hm.scen==='seco')hm.rh-=0.5*dt;
+  else if(hm.scen==='humedo')hm.rh+=0.5*dt;
+  else hm.rh+=(50-hm.rh)*0.01*dt;
+  if(hm.humOn)hm.rh+=2.4*dt;
+  if(hm.dehOn)hm.rh-=2.4*dt;
+  if(hm.auto){
+    if(hm.rh<hm.sp-2.5)hm.humReq=true; else if(hm.rh>hm.sp-0.5)hm.humReq=false;
+    if(hm.rh>hm.sp+2.5)hm.dehReq=true; else if(hm.rh<hm.sp+0.5)hm.dehReq=false;
+    hm.humOn=hm.humReq&&!hm.dehReq;
+    hm.dehOn=hm.dehReq&&!hm.humReq;
+  }
+  hm.rh=Math.min(85,Math.max(20,hm.rh));
+  if(hm.humOn)hm.humT+=dt; else hm.humT=0;
+  if(hm.dehOn)hm.dehT+=dt; else hm.dehT=0;
+  hm.hist.push(hm.rh); if(hm.hist.length>200)hm.hist.shift();
+  hm.fan+=7*dt; hm.ph+=90*dt;
+  if(hm.humOn)for(let i=0;i<2;i++)hm.steam.push({x:592+(Math.random()*18-9),y:196,vy:-(34+Math.random()*22),vx:(Math.random()-0.5)*10,life:1});
+  hm.steam.forEach(p=>{p.y+=p.vy*dt;p.x+=p.vx*dt;p.life-=dt*0.75;});
+  hm.steam=hm.steam.filter(p=>p.life>0);
+  if(hm.dehOn&&Math.random()<0.4)hm.drops.push({x:440+Math.random()*66,y:150+Math.random()*50,vy:80});
+  hm.drops.forEach(p=>p.y+=p.vy*dt);
+  hm.drops=hm.drops.filter(p=>p.y<206);
+  if(hm.dehOn)hm.drain.push({p:0});
+  hm.drain.forEach(p=>p.p+=dt*0.55);
+  hm.drain=hm.drain.filter(p=>p.p<1);
+}
+function stepIdx(T){ return T<=0?-1:Math.min(4,Math.floor(T/1.4)); }
+function updSteps(){
+  const ih=stepIdx(hm.humT), idd=stepIdx(hm.dehT);
+  [...$('hmH').children].forEach((li,i)=>{ li.className = ih<0?'':(i<ih?'done':i===ih?'act':''); });
+  [...$('hmD').children].forEach((li,i)=>{ li.className = idd<0?'':(i<idd?'done':i===idd?'act':''); });
+}
+function updHumBtns(){
+  $('hmAuto').textContent=hm.auto?'🤖 AUTO (activo)':'🤖 AUTO';
+  $('hmAuto').className='btn'+(hm.auto?'':' gh');
+  $('hmHumM').className='btn'+((!hm.auto&&hm.humOn)?'':' gh');
+  $('hmHumM').textContent=hm.humOn?'💦 Humidificando… (clic para detener)':'💦 Forzar humidificación';
+  $('hmDehM').className='btn'+((!hm.auto&&hm.dehOn)?'':' gh');
+  $('hmDehM').textContent=hm.dehOn?'❄️ Deshumidificando… (clic para detener)':'❄️ Forzar deshumidificación';
+}
+function drawHum(ts){
+  if(!hm.lastT)hm.lastT=ts;
+  const dt=Math.min(0.05,(ts-hm.lastT)/1000); hm.lastT=ts;
+  hmTick(dt);
+  const ctx=$('hmCv').getContext('2d'); ctx.clearRect(0,0,900,300);
+  const inBand=Math.abs(hm.rh-hm.sp)<=2.5;
+  // ---- SALA ----
+  ctx.fillStyle=!inBand?(hm.rh<hm.sp?'#3d2a05':'#0c2f45'):'#0e3520';
+  ctx.fillRect(16,30,236,222);
+  ctx.strokeStyle='#24365c'; ctx.strokeRect(16,30,236,222);
+  ctx.fillStyle='#e6edf7'; ctx.font='bold 14px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('SALA DE TI',134,54);
+  ctx.font='bold 34px Segoe UI';
+  ctx.fillStyle=hm.rh<40?'#fbbf24':hm.rh>60?'#38bdf8':'#4ade80';
+  ctx.fillText(hm.rh.toFixed(1)+'%',134,150);
+  ctx.font='12px Segoe UI'; ctx.fillStyle='#93a5c4';
+  ctx.fillText('humedad relativa',134,172);
+  ctx.fillStyle=!inBand?(hm.rh<hm.sp?'#fbbf24':'#38bdf8'):'#4ade80';
+  ctx.font='bold 12px Segoe UI';
+  ctx.fillText(!inBand?(hm.rh<hm.sp?'⚠️ SECA — riesgo ESD':'⚠️ HÚMEDA — riesgo condensación'):'✓ dentro de banda',134,200);
+  ctx.textAlign='left';
+  // ---- ductos ----
+  ctx.strokeStyle='#38bdf8'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(252,62); ctx.lineTo(322,62); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(322,62); ctx.lineTo(312,56); ctx.moveTo(322,62); ctx.lineTo(312,68); ctx.stroke();
+  ctx.fillStyle='#93a5c4'; ctx.font='10px Segoe UI';
+  ctx.fillText('aire de retorno (sale de la sala)',268,50);
+  ctx.beginPath(); ctx.moveTo(322,236); ctx.lineTo(252,236); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(252,236); ctx.lineTo(262,230); ctx.moveTo(252,236); ctx.lineTo(262,242); ctx.stroke();
+  ctx.fillText('aire de suministro (acondicionado)',262,278);
+  ctx.lineWidth=1;
+  // ---- CRAC ----
+  ctx.fillStyle='#101a30'; ctx.fillRect(330,30,318,222);
+  ctx.strokeStyle='#38bdf8'; ctx.strokeRect(330,30,318,222);
+  ctx.fillStyle='#93a5c4'; ctx.font='bold 13px Segoe UI';
+  ctx.fillText('CRAC DE PRECISIÓN',342,50);
+  // flujo interno
+  ctx.strokeStyle='#1e3a5f'; ctx.beginPath(); ctx.moveTo(345,150); ctx.lineTo(634,150); ctx.stroke();
+  for(let i=0;i<6;i++){
+    const x=345+((hm.ph+i*55)%289);
+    ctx.fillStyle='#38bdf8'; ctx.beginPath(); ctx.arc(x,150,3,0,7); ctx.fill();
+  }
+  // ventilador
+  ctx.strokeStyle='#24365c'; ctx.beginPath(); ctx.arc(375,150,22,0,7); ctx.stroke();
+  for(let b=0;b<3;b++){
+    ctx.save(); ctx.translate(375,150); ctx.rotate(hm.fan+b*2.094);
+    ctx.fillStyle='#93a5c4'; ctx.beginPath(); ctx.ellipse(0,-11,5,11,0,0,7); ctx.fill(); ctx.restore();
+  }
+  ctx.fillStyle='#93a5c4'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('ventilador',375,184);
+  // serpentín frío
+  const pts=[[440,195],[510,182],[440,169],[510,156],[440,143],[510,130],[440,117],[510,104]];
+  ctx.strokeStyle=hm.dehOn?'#7cc7ff':'#2d6da8'; ctx.lineWidth=hm.dehOn?3:2;
+  ctx.beginPath(); pts.forEach((p,i)=>i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1])); ctx.stroke(); ctx.lineWidth=1;
+  ctx.fillStyle=hm.dehOn?'#7cc7ff':'#2d6da8'; ctx.font='bold 9px Segoe UI';
+  ctx.fillText('serpentín frío'+(hm.dehOn?' < PUNTO DE ROCÍO':''),475,94);
+  // bandeja + drenaje
+  ctx.fillStyle='#0b2b45'; ctx.fillRect(436,206,78,10);
+  ctx.strokeStyle='#24365c'; ctx.beginPath(); ctx.moveTo(475,216); ctx.lineTo(475,258); ctx.lineTo(600,258); ctx.stroke();
+  ctx.fillStyle='#93a5c4'; ctx.font='9px Segoe UI'; ctx.textAlign='center';
+  ctx.fillText('bandeja + drenaje de condensado',538,272);
+  hm.drain.forEach(p=>{
+    let x,y;
+    if(p.p<0.5){ x=475; y=216+p.p/0.5*42; } else { x=475+(p.p-0.5)/0.5*120; y=258; }
+    ctx.fillStyle='#7cc7ff'; ctx.beginPath(); ctx.arc(x,y,2.5,0,7); ctx.fill();
+  });
+  // recalentador
+  ctx.strokeStyle=hm.dehOn?'#f59e0b':'#6b5216'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(524,120); ctx.lineTo(524,180); ctx.stroke(); ctx.lineWidth=1;
+  ctx.fillStyle=hm.dehOn?'#f59e0b':'#6b5216'; ctx.font='9px Segoe UI';
+  ctx.fillText('recalentador'+(hm.dehOn?' 🔥':''),524,190);
+  // humidificador
+  ctx.fillStyle='#0b2b45'; ctx.fillRect(560,200,64,22);
+  ctx.strokeStyle='#24365c'; ctx.strokeRect(560,200,64,22);
+  ctx.strokeStyle=hm.humOn?'#f59e0b':'#6b5216'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(580,204); ctx.lineTo(580,218); ctx.moveTo(600,204); ctx.lineTo(600,218); ctx.stroke(); ctx.lineWidth=1;
+  ctx.fillStyle=hm.humOn?'#4ade80':'#93a5c4'; ctx.font='bold 9px Segoe UI';
+  ctx.fillText('humidificador'+(hm.humOn?' 💦 ON':''),592,94);
+  hm.steam.forEach(p=>{
+    ctx.fillStyle='rgba(207,232,255,'+(p.life*0.55)+')';
+    ctx.beginPath(); ctx.arc(p.x,p.y,3+(1-p.life)*5,0,7); ctx.fill();
+  });
+  hm.drops.forEach(p=>{ ctx.fillStyle='#7cc7ff'; ctx.beginPath(); ctx.arc(p.x,p.y,2.5,0,7); ctx.fill(); });
+  ctx.textAlign='left';
+  // ---- PANEL DE CONTROL ----
+  ctx.fillStyle='#0d1526'; ctx.fillRect(662,30,222,222);
+  ctx.strokeStyle='#24365c'; ctx.strokeRect(662,30,222,222);
+  ctx.fillStyle='#e6edf7'; ctx.font='bold 12px Segoe UI';
+  ctx.fillText('PANEL DE CONTROL',674,52);
+  ctx.fillStyle='#93a5c4'; ctx.font='10px Segoe UI';
+  ctx.fillText('RH de sala',674,74);
+  ctx.fillStyle=hm.rh<40?'#fbbf24':hm.rh>60?'#38bdf8':'#4ade80';
+  ctx.font='bold 24px Segoe UI';
+  ctx.fillText(hm.rh.toFixed(1)+' %',674,98);
+  ctx.fillStyle='#93a5c4'; ctx.font='10px Segoe UI';
+  ctx.fillText('Consigna: '+hm.sp+'% · Banda: '+(hm.sp-2.5)+' – '+(hm.sp+2.5)+'%',674,118);
+  ctx.fillText('Modo: '+(hm.auto?'🤖 AUTO':'✋ MANUAL'),674,134);
+  ctx.fillStyle=hm.humOn?'#4ade80':'#445';
+  ctx.font='bold 11px Segoe UI';
+  ctx.fillText('💦 Humidificador: '+(hm.humOn?'ON':'off'),674,158);
+  ctx.fillStyle=hm.dehOn?'#7cc7ff':'#445';
+  ctx.fillText('❄️ Deshumidificación: '+(hm.dehOn?'ON':'off'),674,176);
+  ctx.fillStyle='#445'; ctx.font='10px Segoe UI';
+  ctx.fillText('Historial RH (últimos s):',674,198);
+  // sparkline historial
+  ctx.fillStyle='#0a1020'; ctx.fillRect(674,204,198,36);
+  ctx.fillStyle='rgba(74,222,128,0.15)';
+  const yOf=v=>204+36-(v-20)/(80-20)*36;
+  ctx.fillRect(674,yOf(hm.sp+2.5),198,yOf(hm.sp-2.5)-yOf(hm.sp+2.5));
+  ctx.strokeStyle='#38bdf8'; ctx.beginPath();
+  hm.hist.forEach((v,i)=>{
+    const x=674+i*(198/199), y=yOf(v);
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // textos de estado y pasos
+  if(++hm.uiN%10===0){
+    let now;
+    if(hm.humOn) now='💦 <b class="okT">HUMIDIFICANDO</b> — inyectando VAPOR al aire de suministro para SUBIR la RH: '+hm.rh.toFixed(1)+'% → objetivo '+hm.sp+'%. El vapor agrega humedad <b>sin enfriar</b> el aire. Sigue los pasos numerados (Proceso 1).';
+    else if(hm.dehOn) now='❄️ <b class="amT">DESHUMIDIFICANDO</b> — el serpentín está POR DEBAJO del punto de rocío: el agua del aire CONDENSA y se drena ('+hm.rh.toFixed(1)+'% → objetivo '+hm.sp+'%). Después el recalentador corrige la temperatura. Sigue los pasos (Proceso 2).';
+    else now='⏸ <b>En banda muerta</b> — RH '+hm.rh.toFixed(1)+'% está dentro de la banda '+(hm.sp-2.5)+'–'+(hm.sp+2.5)+'%: no se requiere proceso. La banda muerta evita que el equipo oscile (encender/apagar sin parar).';
+    $('hmNow').innerHTML=now;
+    updSteps();
+  }
+}
+document.querySelectorAll('[data-hs]').forEach(b=>b.onclick=()=>{
+  hm.scen=b.dataset.hs; seen('humproc');
+  document.querySelectorAll('[data-hs]').forEach(x=>x.className=x===b?'btn':'btn gh');
+});
+ $('hmSp').oninput=e=>{ hm.sp=+e.target.value; $('hmSpL').textContent=hm.sp; seen('humproc'); };
+ $('hmAuto').onclick=()=>{ hm.auto=true; hm.humReq=hm.dehReq=false; updHumBtns(); seen('humproc'); };
+ $('hmHumM').onclick=()=>{ hm.auto=false; hm.humOn=!hm.humOn; if(hm.humOn)hm.dehOn=false; updHumBtns(); seen('humproc'); };
+ $('hmDehM').onclick=()=>{ hm.auto=false; hm.dehOn=!hm.dehOn; if(hm.dehOn)hm.humOn=false; updHumBtns(); seen('humproc'); };
+updHumBtns();
+
+/* ---- loop de animación ---- */
+function tick(t){
+  if($('m1').classList.contains('act')){ drawAC(t); drawBat(t); }
+  else if($('m3').classList.contains('act')){ drawGV(); }
+  else if($('m4').classList.contains('act')){ drawHum(t); }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
