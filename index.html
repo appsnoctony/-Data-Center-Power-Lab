@@ -68,6 +68,7 @@ canvas{width:100%; border-radius:10px; background:#0a1020; border:1px solid var(
 #upsSvg .flow.off{stroke:#39456a; animation:none}
 #upsSvg .flow.bat{stroke:var(--am)}
 #upsSvg .byp{stroke:#5b6c93; stroke-width:2; fill:none; stroke-dasharray:4 5; cursor:pointer}
+#upsSvg .byp:hover{stroke:#8ba0cc}
 #upsSvg rect.bad{fill:#4a1420; stroke:var(--rj)}
 #upsSvg rect.dim{opacity:.35}
 @keyframes mv{to{stroke-dashoffset:-13}}
@@ -132,10 +133,10 @@ footer{text-align:center; color:var(--mut); font-size:.78rem; padding:24px}
 <body>
 
 <script>
-window.onerror=function(msg,src,line,col){
+window.onerror=function(msg,src,line){
   var d=document.createElement('div');
-  d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#7a1024;color:#fff;padding:10px 14px;font:13px monospace;z-index:9999;white-space:pre-wrap';
-  d.textContent='[ERROR DETECTADO] '+msg+' - linea '+line+'. Envia este mensaje al instructor.';
+  d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#7a1024;color:#fff;padding:10px 14px;font:13px monospace;z-index:9999';
+  d.textContent='[ERROR] '+msg+' - linea '+line;
   document.body.appendChild(d);
 };
 </script>
@@ -419,7 +420,7 @@ window.onerror=function(msg,src,line,col){
   <canvas id="gvCv" width="900" height="250"></canvas>
   <div class="panel" id="gvState">Modo automático activo. Aplica carga para ver la reacción.</div>
   <ul id="gvLog"></ul>
-  <div class="nota"><div class="nlab">📌 CLAVE</div>Los equipos TI exigen <b>60 Hz ± 0.5</b>. Si las RPM caen sin control, la frecuencia sale de especificación y los equipos pueden fallar o apagarse. 💡 El mismo principle de velocidad variable se usa en ventiladores y bombas del centro de datos: bajar la velocidad reduce la potencia al cubo (P ∝ n³).</div>
+  <div class="nota"><div class="nlab">📌 CLAVE</div>Los equipos TI exigen <b>60 Hz ± 0.5</b>. Si las RPM caen sin control, la frecuencia sale de especificación y los equipos pueden fallar o apagarse. 💡 El mismo principio de velocidad variable se usa en ventiladores y bombas del centro de datos: bajar la velocidad reduce la potencia al cubo (P ∝ n³).</div>
 </div>
 
 </section>
@@ -427,7 +428,7 @@ window.onerror=function(msg,src,line,col){
 <section id="m4">
 
 <div class="card">
-  <h2>🔌 ¿Qué is a PDU?</h2>
+  <h2>🔌 ¿Qué es un PDU?</h2>
   <p>Equipo que <b>distribuye y, en muchos casos, monitorea la energía eléctrica hacia los racks y equipos</b>.</p>
   <span class="chip">Básica</span><span class="chip">Con medición</span><span class="chip">Monitoreada</span><span class="chip">Conmutable</span>
 </div>
@@ -522,12 +523,6 @@ window.onerror=function(msg,src,line,col){
 
 <script>
 "use strict";
-window.onerror=function(msg,src,line){
-  var d=document.createElement('div');
-  d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#7a1024;color:#fff;padding:10px 14px;font:13px monospace;z-index:9999';
-  d.textContent='[ERROR] '+msg+' - linea '+line;
-  document.body.appendChild(d);
-};
 const $=id=>document.getElementById(id);
 const SEEN=new Set(), TOTAL=15;
 function seen(k){ if(SEEN.has(k))return; SEEN.add(k); $('seenN').textContent=SEEN.size;
@@ -575,14 +570,17 @@ function drawAC(t){
   const n=16, sp=(W-110)/n;
   for(let i=0;i<n;i++){
     let x;
-    if(acMode){ x=85+i*sp + 22*Math.sin(tp*2*acF*2 + i*0.9); }
+    if(acMode){ x=85+i*sp + 22*Math.sin(tp*2*acF*2); }
     else{ x=85+((i*sp + tp*80) % (W-110)); }
     const g=acx.createRadialGradient(x,ty,1,x,ty,7);
     g.addColorStop(0,acMode?'#7dd3fc':'#86efac'); g.addColorStop(1,acMode?'#0369a1':'#15803d');
     acx.fillStyle=g; acx.beginPath(); acx.arc(x,ty,7,0,7); acx.fill();
   }
   acx.fillStyle='#e6edf7'; acx.font='bold 13px Segoe UI';
-  acx.fillText(acMode?'← electrones oscilan: van y vienen →':'→ electrones: siempre el mismo sentido →',60,ty+55);
+  const cosp=Math.cos(tp*2*acF*2);
+  acx.fillText(acMode
+    ?(cosp>0.08?'→ TODOS los electrones van a la DERECHA':(cosp<-0.08?'← TODOS los electrones van a la IZQUIERDA':'• CAMBIO DE SENTIDO (cruce por cero)'))
+    :'→ electrones: siempre el mismo sentido →',60,ty+55);
 }
 
 function txUpd(fl){
